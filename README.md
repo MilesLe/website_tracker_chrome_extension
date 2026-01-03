@@ -214,25 +214,32 @@ Service workers in Manifest V3 are **ephemeral** - they can be terminated at any
 - **Python** 3.11+ (3.12 recommended) (for backend)
 - **Chrome Browser** (for testing)
 
-#### Upgrading Node.js and Python
+#### Installing/Upgrading Node.js and Python
+
+**For detailed setup instructions, see [SETUP_GUIDE.md](SETUP_GUIDE.md)**
+
+**Quick Reference:**
 
 **Node.js:**
 - Check current version: `node --version`
-- Recommended: Use [nvm](https://github.com/nvm-sh/nvm) to manage Node.js versions
+- If `nvm` is not installed, see [SETUP_GUIDE.md](SETUP_GUIDE.md) for installation instructions
+- Once nvm is installed:
   ```bash
   nvm install --lts
   nvm use --lts
+  nvm alias default lts/*
   ```
-- Or use Homebrew: `brew upgrade node`
+- Or use Homebrew: `brew install node`
 
 **Python:**
 - Check current version: `python3 --version`
-- Recommended: Use [pyenv](https://github.com/pyenv/pyenv) to manage Python versions
+- If `pyenv` is not installed, see [SETUP_GUIDE.md](SETUP_GUIDE.md) for installation instructions
+- Once pyenv is installed:
   ```bash
   pyenv install 3.12
   pyenv global 3.12
   ```
-- Or use Homebrew: `brew upgrade python`
+- Or use Homebrew: `brew install python@3.12`
 
 ### Installation
 
