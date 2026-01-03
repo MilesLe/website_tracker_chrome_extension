@@ -211,7 +211,7 @@ Service workers in Manifest V3 are **ephemeral** - they can be terminated at any
 ### Prerequisites
 
 - **Node.js** 20+ (LTS recommended) and npm 10+
-- **Python** 3.11+ (3.12 recommended) (for backend)
+- **Python** 3.10+ (3.12 recommended, but 3.10+ works fine) (for backend)
 - **Chrome Browser** (for testing)
 
 #### Installing/Upgrading Node.js and Python

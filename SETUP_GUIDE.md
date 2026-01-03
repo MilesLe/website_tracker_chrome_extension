@@ -85,7 +85,17 @@ source ~/.bash_profile
 pyenv --version
 ```
 
-### Install Python 3.12
+### Install Python
+
+**Python 3.10+ is required. Python 3.12 is recommended but 3.10+ works perfectly fine for this project.**
+
+**If you already have Python 3.10+ installed via pyenv, you can use it:**
+```bash
+cd backend
+pyenv local 3.10.15  # or whatever 3.10+ version you have
+```
+
+**To install Python 3.12 (optional, for latest features):**
 
 **First, install required dependencies (macOS):**
 ```bash
@@ -96,24 +106,54 @@ brew link --force gettext
 **Then install Python:**
 ```bash
 pyenv install 3.12
-pyenv global 3.12
 ```
 
-**If you still get build errors, try with additional flags:**
+**If you still get build errors, use the helper script:**
 ```bash
+cd backend
+./install-python.sh
+```
+
+**Or manually set environment variables in the same terminal session:**
+```bash
+# Make sure these are set BEFORE running pyenv install
 export LDFLAGS="-L$(brew --prefix gettext)/lib"
 export CPPFLAGS="-I$(brew --prefix gettext)/include"
 pyenv install 3.12
 ```
+
+**Important:** The environment variables must be set in the same terminal session where you run `pyenv install`. If you open a new terminal, you'll need to set them again.
+
+**Set Python version for this project only (recommended):**
+```bash
+cd backend
+pyenv local 3.10.15  # Use your existing Python 3.10.15
+# OR
+pyenv local 3.12     # If you installed 3.12
+```
+
+This creates/updates `.python-version` in the backend directory, so pyenv will automatically use the specified Python version when you're in that directory. You don't need to set it globally.
 
 **Verify installation:**
 ```bash
 python3 --version
 ```
 
+**Note:** Setting `pyenv global 3.12` is optional. Using `pyenv local` keeps the Python version scoped to this project, which is better for project isolation.
+
 ### Using the project's Python version
 
-This project specifies Python 3.12 in `backend/.python-version`. The setup script will automatically use it if pyenv is installed.
+This project specifies Python 3.12 in `backend/.python-version`. 
+
+**To set it locally for this project (recommended):**
+```bash
+cd backend
+pyenv local 3.12
+```
+
+This ensures that whenever you're in the `backend` directory, pyenv will automatically use Python 3.12. The virtual environment will be created with this version, keeping everything isolated to the project.
+
+**You don't need to set it globally** - `pyenv local` is sufficient and keeps your system Python unchanged.
 
 ## Alternative: Using Homebrew (macOS)
 

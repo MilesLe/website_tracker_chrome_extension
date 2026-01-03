@@ -38,16 +38,16 @@ fi
 
 # Check if Python 3 is available
 if ! command -v "$PYTHON3_CMD" &> /dev/null; then
-    echo "Error: python3 is not installed. Please install Python 3.11+ first."
+    echo "Error: python3 is not installed. Please install Python 3.10+ first."
     exit 1
 fi
 
 # Check Python version
 PYTHON_VERSION=$($PYTHON3_CMD --version | cut -d' ' -f2 | cut -d'.' -f1,2)
-REQUIRED_VERSION="3.11"
+REQUIRED_VERSION="3.10"
 
 if [ "$(printf '%s\n' "$REQUIRED_VERSION" "$PYTHON_VERSION" | sort -V | head -n1)" != "$REQUIRED_VERSION" ]; then
-    echo -e "${YELLOW}Warning: Python $PYTHON_VERSION detected. Python 3.11+ is recommended.${NC}"
+    echo -e "${YELLOW}Warning: Python $PYTHON_VERSION detected. Python 3.10+ is required.${NC}"
 fi
 
 # Create virtual environment if it doesn't exist
