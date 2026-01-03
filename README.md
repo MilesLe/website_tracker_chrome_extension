@@ -410,30 +410,102 @@ The test setup (`__tests__/setup.ts`) provides mocked chrome APIs. Use `resetMoc
 
 ### Python Environment Setup
 
-1. **Create virtual environment** (recommended):
+This project **requires** a Python virtual environment to keep dependencies isolated. The virtual environment will be created in `backend/venv/`.
+
+#### Quick Setup (Recommended)
+
+**macOS/Linux:**
+```bash
+cd backend
+./setup.sh
+```
+
+**Windows:**
+```cmd
+cd backend
+setup.bat
+```
+
+This automatically:
+- Creates a Python virtual environment
+- Installs all dependencies
+- Sets up the environment for use
+
+#### Manual Setup
+
+If you prefer manual setup:
+
+1. **Create virtual environment:**
    ```bash
    cd backend
    python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-2. **Install dependencies**:
+2. **Activate virtual environment:**
+   
+   **macOS/Linux:**
    ```bash
+   source venv/bin/activate
+   ```
+   
+   **Windows:**
+   ```cmd
+   venv\Scripts\activate.bat
+   ```
+
+3. **Install dependencies:**
+   ```bash
+   pip install --upgrade pip
    pip install -r requirements.txt
    ```
 
 ### Running the Server
 
+#### Using the Run Script (Recommended)
+
+**macOS/Linux:**
 ```bash
-python main.py
+cd backend
+./run.sh
 ```
 
-Or using uvicorn directly:
-```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+**Windows:**
+```cmd
+cd backend
+run.bat
 ```
+
+The run script automatically activates the virtual environment and starts the server.
+
+#### Manual Run
+
+1. **Activate virtual environment** (if not already activated):
+   
+   **macOS/Linux:**
+   ```bash
+   cd backend
+   source venv/bin/activate
+   ```
+   
+   **Windows:**
+   ```cmd
+   cd backend
+   venv\Scripts\activate.bat
+   ```
+
+2. **Run the server:**
+   ```bash
+   python main.py
+   ```
+
+   Or using uvicorn directly:
+   ```bash
+   uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+   ```
 
 The server will start on `http://localhost:8000`
+
+**Note:** Always activate the virtual environment before running the server. The virtual environment ensures that the correct Python version and packages are used for this project.
 
 ### API Endpoint Documentation
 

@@ -4,22 +4,110 @@ Simple FastAPI server to receive notifications when website time limits are reac
 
 ## Setup
 
-1. Install Python dependencies:
+This project uses a Python virtual environment to keep dependencies isolated. The virtual environment will be created in the `venv/` directory.
+
+### Quick Setup (Recommended)
+
+**macOS/Linux:**
 ```bash
-pip install -r requirements.txt
+cd backend
+./setup.sh
 ```
 
-2. Run the server:
-```bash
-python main.py
+**Windows:**
+```cmd
+cd backend
+setup.bat
 ```
 
-Or using uvicorn directly:
+This will:
+1. Create a Python virtual environment (`venv/`)
+2. Activate the virtual environment
+3. Upgrade pip to the latest version
+4. Install all required dependencies
+
+### Manual Setup
+
+If you prefer to set up manually:
+
+1. **Create virtual environment:**
+   ```bash
+   cd backend
+   python3 -m venv venv
+   ```
+
+2. **Activate virtual environment:**
+   
+   **macOS/Linux:**
+   ```bash
+   source venv/bin/activate
+   ```
+   
+   **Windows:**
+   ```cmd
+   venv\Scripts\activate.bat
+   ```
+
+3. **Upgrade pip:**
+   ```bash
+   pip install --upgrade pip
+   ```
+
+4. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## Running the Server
+
+### Using the Run Script (Recommended)
+
+**macOS/Linux:**
 ```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+cd backend
+./run.sh
 ```
+
+**Windows:**
+```cmd
+cd backend
+run.bat
+```
+
+The run script automatically activates the virtual environment and starts the server.
+
+### Manual Run
+
+1. **Activate virtual environment** (if not already activated):
+   
+   **macOS/Linux:**
+   ```bash
+   source venv/bin/activate
+   ```
+   
+   **Windows:**
+   ```cmd
+   venv\Scripts\activate.bat
+   ```
+
+2. **Run the server:**
+   ```bash
+   python main.py
+   ```
+
+   Or using uvicorn directly:
+   ```bash
+   uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+   ```
 
 The server will start on `http://localhost:8000`
+
+### Deactivating Virtual Environment
+
+When you're done, deactivate the virtual environment:
+```bash
+deactivate
+```
 
 ## API Endpoints
 
