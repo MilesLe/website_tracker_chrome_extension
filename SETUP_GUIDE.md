@@ -87,9 +87,23 @@ pyenv --version
 
 ### Install Python 3.12
 
+**First, install required dependencies (macOS):**
+```bash
+brew install gettext
+brew link --force gettext
+```
+
+**Then install Python:**
 ```bash
 pyenv install 3.12
 pyenv global 3.12
+```
+
+**If you still get build errors, try with additional flags:**
+```bash
+export LDFLAGS="-L$(brew --prefix gettext)/lib"
+export CPPFLAGS="-I$(brew --prefix gettext)/include"
+pyenv install 3.12
 ```
 
 **Verify installation:**
@@ -135,6 +149,34 @@ setup.bat         # Windows
 ```
 
 ## Troubleshooting
+
+### Python build fails with "symbol(s) not found for architecture arm64"
+
+This error usually means missing dependencies. Install them:
+
+```bash
+brew install gettext
+brew link --force gettext
+```
+
+Then set environment variables and retry:
+```bash
+export LDFLAGS="-L$(brew --prefix gettext)/lib"
+export CPPFLAGS="-I$(brew --prefix gettext)/include"
+pyenv install 3.12
+```
+
+**Alternative: Use Homebrew Python instead**
+If pyenv continues to have issues, you can use Homebrew's Python:
+```bash
+brew install python@3.12
+```
+
+Then create a symlink or use the full path:
+```bash
+# Add to PATH in ~/.zshrc or ~/.bash_profile
+export PATH="/opt/homebrew/opt/python@3.12/bin:$PATH"
+```
 
 ### nvm command not found
 
