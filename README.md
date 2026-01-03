@@ -210,9 +210,29 @@ Service workers in Manifest V3 are **ephemeral** - they can be terminated at any
 
 ### Prerequisites
 
-- **Node.js** 18+ and npm
-- **Python** 3.8+ (for backend)
+- **Node.js** 20+ (LTS recommended) and npm 10+
+- **Python** 3.11+ (3.12 recommended) (for backend)
 - **Chrome Browser** (for testing)
+
+#### Upgrading Node.js and Python
+
+**Node.js:**
+- Check current version: `node --version`
+- Recommended: Use [nvm](https://github.com/nvm-sh/nvm) to manage Node.js versions
+  ```bash
+  nvm install --lts
+  nvm use --lts
+  ```
+- Or use Homebrew: `brew upgrade node`
+
+**Python:**
+- Check current version: `python3 --version`
+- Recommended: Use [pyenv](https://github.com/pyenv/pyenv) to manage Python versions
+  ```bash
+  pyenv install 3.12
+  pyenv global 3.12
+  ```
+- Or use Homebrew: `brew upgrade python`
 
 ### Installation
 
