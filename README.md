@@ -254,13 +254,18 @@ Service workers in Manifest V3 are **ephemeral** - they can be terminated at any
 
 4. **Generate icons** (if not already present):
    ```bash
-   # Option 1: Using Python (requires Pillow)
+   # Option 1: Convert SVG to PNG (Recommended - uses sharp)
+   npm run icons:convert
+   
+   # Option 2: Using Python (requires Pillow)
    pip install Pillow
    python3 scripts/generate-icons.py
    
-   # Option 2: Create icons manually (16x16, 48x48, 128x128 PNG files)
+   # Option 3: Create icons manually (16x16, 48x48, 128x128 PNG files)
    # Place them in extension/public/icons/
    ```
+   
+   **Note:** Chrome extensions require PNG format for icons. SVG files are not supported in the manifest. The extension includes SVG source files that can be converted to PNG using the `icons:convert` script.
 
 5. **Load extension in Chrome**:
    - Open Chrome and navigate to `chrome://extensions/`
@@ -527,6 +532,10 @@ curl -X POST http://localhost:8000/limit-reached \
 - **TypeScript errors**: Run `npm run build` to see detailed errors
 - **Missing dependencies**: Run `npm install` again
 - **Vite errors**: Check `vite.config.ts` for configuration issues
+- **Missing icon files**: If build fails with "Could not load manifest asset", ensure PNG icons exist:
+  ```bash
+  npm run icons:convert
+  ```
 
 ### Service Worker Not Starting
 

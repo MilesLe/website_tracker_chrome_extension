@@ -7,13 +7,20 @@ This directory should contain PNG icon files for the extension:
 
 ## Generating Icons
 
-### Option 1: Using Python (Pillow)
+### Option 1: Convert SVG to PNG (Recommended)
+If you have SVG icons and want to convert them to PNG:
+```bash
+npm run icons:convert
+```
+This uses the `sharp` library to convert existing SVG files to PNG format.
+
+### Option 2: Using Python (Pillow)
 ```bash
 pip install Pillow
 python3 ../scripts/generate-icons.py
 ```
 
-### Option 2: Using ImageMagick
+### Option 3: Using ImageMagick
 ```bash
 # Install ImageMagick first, then:
 for size in 16 48 128; do
@@ -23,10 +30,10 @@ for size in 16 48 128; do
 done
 ```
 
-### Option 3: Manual Creation
+### Option 4: Manual Creation
 Create PNG files with a blue background (#1976d2) and a clock/timer icon in white.
 
 ## Current Status
 
-SVG placeholder icons have been created. For production use, convert these to PNG format or create new PNG icons.
+✅ PNG icons are available and ready for use. SVG source files are also kept for easy editing and regeneration.
 
