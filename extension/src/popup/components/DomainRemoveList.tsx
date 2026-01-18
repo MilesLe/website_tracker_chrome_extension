@@ -1,4 +1,4 @@
-import { Box, Typography, Button, List, ListItem } from '@mui/material';
+import { Box, Typography, IconButton, List, ListItem } from '@mui/material';
 import styled from '@emotion/styled';
 import DeleteIcon from '@mui/icons-material/Delete';
 
@@ -60,15 +60,13 @@ const StyledDomainDetails = styled(Typography)`
   color: ${({ theme }) => theme.palette.text.secondary};
 `;
 
-const StyledRemoveButton = styled(Button)`
-  min-width: auto;
-  padding: 6px 12px;
-  font-size: 12px;
-  background-color: ${({ theme }) => theme.palette.error.main};
-  color: white;
+const StyledRemoveButton = styled(IconButton)`
+  color: ${({ theme }) => theme.palette.error.main};
+  padding: 8px;
   
   &:hover {
-    background-color: ${({ theme }) => theme.palette.error.dark};
+    background-color: ${({ theme }) => theme.palette.error.main}20;
+    color: ${({ theme }) => theme.palette.error.dark};
   }
 `;
 
@@ -104,12 +102,11 @@ export default function DomainRemoveList({ sites, onRemoveDomain }: DomainRemove
               </StyledDomainDetails>
             </StyledDomainInfo>
             <StyledRemoveButton
-              variant="contained"
-              startIcon={<DeleteIcon />}
               onClick={() => handleRemove(site.domain)}
               size="small"
+              aria-label={`Remove ${site.domain}`}
             >
-              Remove
+              <DeleteIcon />
             </StyledRemoveButton>
           </StyledListItem>
         ))}

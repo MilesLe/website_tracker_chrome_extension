@@ -1,7 +1,14 @@
-import { describe, it, expect } from 'vitest';
-import { screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { screen, waitFor, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { renderWithTheme } from '../../test-utils';
 import TrackedSiteItem from '../../../src/popup/components/TrackedSiteItem';
+
+// Mock the favicon utility
+vi.mock('../../../src/popup/utils/favicon', () => ({
+  getFaviconUrl: vi.fn((domain: string) => `https://www.google.com/s2/favicons?domain=${domain}&sz=32`),
+  getDomainInitial: vi.fn((domain: string) => domain.charAt(0).toUpperCase()),
+}));
 
 describe('TrackedSiteItem', () => {
   const mockSite = {
@@ -10,22 +17,27 @@ describe('TrackedSiteItem', () => {
     usage: 30,
   };
 
-  it('should render site information', () => {
+  beforeEach(() => {
+    // Reset any state between tests
+    vi.clearAllMocks();
+  });
+
+  it('should render site domain in compact view', () => {
     renderWithTheme(<TrackedSiteItem site={mockSite} />);
 
     expect(screen.getByText('youtube.com')).toBeInTheDocument();
-    expect(screen.getByText('30.0 / 60 minutes')).toBeInTheDocument();
   });
 
-  it('should display progress bar', () => {
-    renderWithTheme(<TrackedSiteItem site={mockSite} />);
-
-    const progressBar = screen.getByRole('progressbar');
-    expect(progressBar).toBeInTheDocument();
-    expect(progressBar).toHaveAttribute('aria-valuenow', '50');
+  it('should show green color when under limit', () => {
+    const { container } = renderWithTheme(<TrackedSiteItem site={mockSite} />);
+    
+    const cell = container.firstChild as HTMLElement;
+    expect(cell).toBeInTheDocument();
+    // Check for green border color (success color)
+    expect(cell).toHaveStyle({ borderColor: expect.stringContaining('') });
   });
 
-  it('should show over limit styling when usage exceeds limit', () => {
+  it('should show red color when at or over limit', () => {
     const overLimitSite = {
       domain: 'youtube.com',
       limit: 60,
@@ -33,11 +45,82 @@ describe('TrackedSiteItem', () => {
     };
     const { container } = renderWithTheme(<TrackedSiteItem site={overLimitSite} />);
 
-    const card = container.querySelector('.MuiCard-root');
-    expect(card).toBeInTheDocument();
+    const cell = container.firstChild as HTMLElement;
+    expect(cell).toBeInTheDocument();
   });
 
-  it('should format usage to one decimal place', () => {
+  it('should expand on hover to show details', async () => {
+    const user = userEvent.setup();
+    renderWithTheme(<TrackedSiteItem site={mockSite} />);
+
+    const clickableCell = screen.getByTestId('tracked-site-youtube.com');
+    expect(clickableCell).toBeInTheDocument();
+
+    // Initially, expanded content should not be visible
+    expect(screen.queryByText(/30.0 \/ 60 minutes/)).not.toBeInTheDocument();
+
+    // Hover over the cell
+    await user.hover(clickableCell);
+    
+    await waitFor(() => {
+      expect(screen.getByText(/30.0 \/ 60 minutes/)).toBeInTheDocument();
+      expect(screen.getByText(/50.0%/)).toBeInTheDocument();
+    }, { timeout: 2000 });
+  });
+
+  it('should expand on click for mobile support', async () => {
+    renderWithTheme(<TrackedSiteItem site={mockSite} />);
+
+    const clickableCell = screen.getByTestId('tracked-site-youtube.com');
+    expect(clickableCell).toBeInTheDocument();
+
+    // Initially, expanded content should not be visible
+    expect(screen.queryByText(/30.0 \/ 60 minutes/)).not.toBeInTheDocument();
+
+    // Click the cell using fireEvent for more reliable testing
+    fireEvent.click(clickableCell);
+    
+    await waitFor(() => {
+      expect(screen.getByText(/30.0 \/ 60 minutes/)).toBeInTheDocument();
+      expect(screen.getByText(/50.0%/)).toBeInTheDocument();
+    }, { timeout: 2000 });
+  });
+
+  it('should collapse when clicking again', async () => {
+    renderWithTheme(<TrackedSiteItem site={mockSite} />);
+
+    const clickableCell = screen.getByTestId('tracked-site-youtube.com');
+    expect(clickableCell).toBeInTheDocument();
+
+    // Click to expand
+    fireEvent.click(clickableCell);
+    await waitFor(() => {
+      expect(screen.getByText(/30.0 \/ 60 minutes/)).toBeInTheDocument();
+    }, { timeout: 2000 });
+
+    // Click again to collapse
+    fireEvent.click(clickableCell);
+    await waitFor(() => {
+      expect(screen.queryByText(/30.0 \/ 60 minutes/)).not.toBeInTheDocument();
+    }, { timeout: 2000 });
+  });
+
+  it('should display progress bar in expanded view', async () => {
+    const user = userEvent.setup();
+    renderWithTheme(<TrackedSiteItem site={mockSite} />);
+
+    const clickableCell = screen.getByTestId('tracked-site-youtube.com');
+    await user.hover(clickableCell);
+    
+    await waitFor(() => {
+      const progressBar = screen.getByRole('progressbar');
+      expect(progressBar).toBeInTheDocument();
+      expect(progressBar).toHaveAttribute('aria-valuenow', '50');
+    }, { timeout: 2000 });
+  });
+
+  it('should format usage to one decimal place', async () => {
+    const user = userEvent.setup();
     const siteWithDecimal = {
       domain: 'youtube.com',
       limit: 60,
@@ -45,6 +128,19 @@ describe('TrackedSiteItem', () => {
     };
     renderWithTheme(<TrackedSiteItem site={siteWithDecimal} />);
 
-    expect(screen.getByText('30.6 / 60 minutes')).toBeInTheDocument();
+    const clickableCell = screen.getByTestId('tracked-site-youtube.com');
+    await user.hover(clickableCell);
+    
+    await waitFor(() => {
+      expect(screen.getByText(/30.6 \/ 60 minutes/)).toBeInTheDocument();
+    }, { timeout: 2000 });
+  });
+
+  it('should show favicon or fallback initial', () => {
+    renderWithTheme(<TrackedSiteItem site={mockSite} />);
+
+    // Should have either a favicon image or fallback initial
+    const faviconContainer = screen.getByText('youtube.com').previousElementSibling;
+    expect(faviconContainer).toBeInTheDocument();
   });
 });

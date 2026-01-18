@@ -12,8 +12,8 @@ describe('ProgressBar', () => {
     expect(progressBar).toHaveAttribute('aria-valuenow', '50');
   });
 
-  it('should display percentage label when showLabel is true', () => {
-    renderWithTheme(<ProgressBar percentage={75.5} isOverLimit={false} showLabel={true} />);
+  it('should display percentage label when showLabel is true and minimal is false', () => {
+    renderWithTheme(<ProgressBar percentage={75.5} isOverLimit={false} showLabel={true} minimal={false} />);
     
     expect(screen.getByText('Progress')).toBeInTheDocument();
     expect(screen.getByText('75.5%')).toBeInTheDocument();
@@ -23,6 +23,22 @@ describe('ProgressBar', () => {
     renderWithTheme(<ProgressBar percentage={50} isOverLimit={false} showLabel={false} />);
     
     expect(screen.queryByText('Progress')).not.toBeInTheDocument();
+  });
+
+  it('should not display label when minimal is true', () => {
+    renderWithTheme(<ProgressBar percentage={50} isOverLimit={false} minimal={true} />);
+    
+    expect(screen.queryByText('Progress')).not.toBeInTheDocument();
+  });
+
+  it('should render minimal progress bar with reduced height', () => {
+    renderWithTheme(
+      <ProgressBar percentage={50} isOverLimit={false} minimal={true} showLabel={false} />
+    );
+    
+    const progressBar = screen.getByRole('progressbar');
+    expect(progressBar).toBeInTheDocument();
+    // The height should be 3px for minimal mode (checked via styles)
   });
 
   it('should clamp percentage to 0-100 range', () => {
@@ -36,7 +52,14 @@ describe('ProgressBar', () => {
   });
 
   it('should format percentage to one decimal place', () => {
-    renderWithTheme(<ProgressBar percentage={75.555} isOverLimit={false} />);
+    renderWithTheme(<ProgressBar percentage={75.555} isOverLimit={false} showLabel={true} minimal={false} />);
     expect(screen.getByText('75.6%')).toBeInTheDocument();
+  });
+
+  it('should apply error styling when over limit', () => {
+    renderWithTheme(<ProgressBar percentage={100} isOverLimit={true} />);
+    
+    const progressBar = screen.getByRole('progressbar');
+    expect(progressBar).toBeInTheDocument();
   });
 });

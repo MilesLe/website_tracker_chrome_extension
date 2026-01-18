@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import styled from '@emotion/styled';
 import AddIcon from '@mui/icons-material/Add';
@@ -15,9 +16,10 @@ interface TrackedSitesListProps {
 }
 
 const StyledContainer = styled(Box)`
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  align-items: start;
 `;
 
 const StyledEmptyState = styled(Box)`
@@ -44,9 +46,19 @@ const StyledEmptyStateButton = styled(Button)`
 `;
 
 /**
- * Component for displaying the list of tracked sites
+ * Component for displaying the list of tracked sites in a 2-column grid
+ * Sites are sorted by descending percentage usage
  */
 export default function TrackedSitesList({ sites, onOpenManagementPanel }: TrackedSitesListProps) {
+  // Sort sites by descending percentage usage
+  const sortedSites = useMemo(() => {
+    return [...sites].sort((a, b) => {
+      const percentageA = (a.usage / a.limit) * 100;
+      const percentageB = (b.usage / b.limit) * 100;
+      return percentageB - percentageA;
+    });
+  }, [sites]);
+
   if (sites.length === 0) {
     return (
       <StyledEmptyState>
@@ -69,7 +81,7 @@ export default function TrackedSitesList({ sites, onOpenManagementPanel }: Track
 
   return (
     <StyledContainer>
-      {sites.map((site) => (
+      {sortedSites.map((site) => (
         <TrackedSiteItem
           key={site.domain}
           site={site}

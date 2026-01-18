@@ -5,6 +5,7 @@ interface ProgressBarProps {
   percentage: number;
   isOverLimit: boolean;
   showLabel?: boolean;
+  minimal?: boolean;
 }
 
 const StyledProgressContainer = styled(Box)`
@@ -23,10 +24,10 @@ const StyledProgressLabel = styled(Typography, {
 `;
 
 const StyledLinearProgress = styled(LinearProgress, {
-  shouldForwardProp: (prop) => prop !== 'isOverLimit',
-})<{ isOverLimit: boolean }>`
-  height: 8px;
-  border-radius: 4px;
+  shouldForwardProp: (prop) => prop !== 'isOverLimit' && prop !== 'minimal',
+})<{ isOverLimit: boolean; minimal?: boolean }>`
+  height: ${({ minimal }) => (minimal ? '3px' : '8px')};
+  border-radius: ${({ minimal }) => (minimal ? '2px' : '4px')};
   background-color: ${({ theme }) => theme.palette.background.default};
   
   .MuiLinearProgress-bar {
@@ -35,18 +36,20 @@ const StyledLinearProgress = styled(LinearProgress, {
         ? theme.palette.error.main 
         : theme.palette.primary.main};
     transition: width 0.3s ease;
+    border-radius: ${({ minimal }) => (minimal ? '2px' : '4px')};
   }
 `;
 
 /**
  * Progress bar component for displaying usage percentage
+ * @param minimal - If true, renders a slim progress bar (3px height) without label
  */
-export default function ProgressBar({ percentage, isOverLimit, showLabel = true }: ProgressBarProps) {
+export default function ProgressBar({ percentage, isOverLimit, showLabel = true, minimal = false }: ProgressBarProps) {
   const clampedPercentage = Math.min(Math.max(percentage, 0), 100);
 
   return (
     <StyledProgressContainer>
-      {showLabel && (
+      {showLabel && !minimal && (
         <Box display="flex" justifyContent="space-between" marginBottom="5px">
           <Typography 
             variant="caption" 
@@ -66,6 +69,7 @@ export default function ProgressBar({ percentage, isOverLimit, showLabel = true 
         variant="determinate"
         value={clampedPercentage}
         isOverLimit={isOverLimit}
+        minimal={minimal}
       />
     </StyledProgressContainer>
   );
