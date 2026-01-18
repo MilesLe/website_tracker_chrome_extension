@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import type { StorageData, TrackedSites } from '../types';
+import { useState, useEffect } from 'react';
+import type { TrackedSites } from '../types';
 import { getStorageData, getTodayDate, extractDomain } from '../utils';
 
 interface TrackedSiteDisplay {

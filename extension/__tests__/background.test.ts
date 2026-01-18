@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { resetMocks, createMockStorageData } from './setup';
+import { resetMocks, createMockStorageData, chrome } from './setup';
+import type { TrackedSites } from '../src/types';
 
 // Mock the utils module
 vi.mock('../src/utils', () => ({
@@ -8,7 +9,7 @@ vi.mock('../src/utils', () => ({
     if (url.includes('reddit.com')) return 'reddit.com';
     return '';
   }),
-  isDomainTracked: vi.fn((domain: string, trackedSites: any) => {
+  isDomainTracked: vi.fn((domain: string, trackedSites: TrackedSites) => {
     if (trackedSites[domain]) return domain;
     return null;
   }),
@@ -28,16 +29,12 @@ describe('background service worker', () => {
   it('should initialize tracking on startup', async () => {
     // This test verifies that initialization functions are called
     // Since background.ts runs on import, we test the setup indirectly
-    const { getStorageData } = await import('../src/utils');
-    
-    // @ts-ignore
-    global.chrome.idle.setDetectionInterval.mockReturnValue(undefined);
-    // @ts-ignore
-    global.chrome.alarms.create.mockReturnValue(undefined);
+    chrome().idle.setDetectionInterval.mockReturnValue(undefined);
+    chrome().alarms.create.mockReturnValue(undefined);
     
     // Verify chrome APIs are available
-    expect(global.chrome.idle.setDetectionInterval).toBeDefined();
-    expect(global.chrome.alarms.create).toBeDefined();
+    expect(chrome().idle.setDetectionInterval).toBeDefined();
+    expect(chrome().alarms.create).toBeDefined();
   });
 
   it('should handle tab activation', async () => {
@@ -47,23 +44,18 @@ describe('background service worker', () => {
       active: true,
     };
     
-    // @ts-ignore
-    global.chrome.tabs.get.mockResolvedValue(mockTab);
-    // @ts-ignore
-    global.chrome.tabs.query.mockResolvedValue([mockTab]);
-    // @ts-ignore
-    global.chrome.windows.getCurrent.mockResolvedValue({ focused: true });
-    // @ts-ignore
-    global.chrome.idle.queryState.mockResolvedValue('active');
+    chrome().tabs.get.mockResolvedValue(mockTab);
+    chrome().tabs.query.mockResolvedValue([mockTab]);
+    chrome().windows.getCurrent.mockResolvedValue({ focused: true });
+    chrome().idle.queryState.mockResolvedValue('active');
     
     const { getStorageData } = await import('../src/utils');
-    // @ts-ignore
-    getStorageData.mockResolvedValue(createMockStorageData({
+    (getStorageData as any).mockResolvedValue(createMockStorageData({
       trackedSites: { 'youtube.com': 60 },
     }));
     
     // Simulate tab activation
-    const listeners = (global.chrome.tabs.onActivated as any).addListener.mock.calls;
+    const listeners = chrome().tabs.onActivated.addListener.mock.calls;
     expect(listeners.length).toBeGreaterThan(0);
   });
 
@@ -77,18 +69,17 @@ describe('background service worker', () => {
       lastResetDate: '2023-10-27',
     }));
     
-    // @ts-ignore
-    global.chrome.storage.local.set.mockResolvedValue(undefined);
+    chrome().storage.local.set.mockResolvedValue(undefined);
     
     // The reset logic would be called by the alarm handler
     // We verify the storage API is available
-    expect(global.chrome.storage.local.set).toBeDefined();
+    expect(chrome().storage.local.set).toBeDefined();
   });
 
   it('should detect limit reached', async () => {
-    const { getStorageData, getUsage, getLimit } = await import('../src/utils');
     const today = '2023-10-27';
     
+    const { getStorageData } = await import('../src/utils');
     // @ts-ignore
     getStorageData.mockResolvedValue(createMockStorageData({
       trackedSites: { 'youtube.com': 60 },
@@ -97,23 +88,22 @@ describe('background service worker', () => {
       },
     }));
     
-    // @ts-ignore
-    global.chrome.notifications.create.mockResolvedValue('notification-id');
+    chrome().notifications.create.mockResolvedValue('notification-id');
     
     // Mock fetch for API call
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-    });
+    }) as any;
     
     // Verify notification API is available
-    expect(global.chrome.notifications.create).toBeDefined();
+    expect(chrome().notifications.create).toBeDefined();
   });
 
   it('should send API notification with retry', async () => {
     // Mock fetch to fail first time, succeed second time
     let callCount = 0;
-    global.fetch = vi.fn().mockImplementation(() => {
+    globalThis.fetch = vi.fn().mockImplementation(() => {
       callCount++;
       if (callCount === 1) {
         return Promise.reject(new Error('Network error'));
@@ -122,17 +112,11 @@ describe('background service worker', () => {
         ok: true,
         status: 200,
       });
-    });
-    
-    const payload = {
-      domain: 'youtube.com',
-      minutes: 60,
-      timestamp: new Date().toISOString(),
-    };
+    }) as any;
     
     // The retry logic is in the background script
     // We verify fetch is available
-    expect(global.fetch).toBeDefined();
+    expect(globalThis.fetch).toBeDefined();
   });
 });
 

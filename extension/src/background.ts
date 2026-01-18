@@ -3,11 +3,9 @@ import {
   isDomainTracked, 
   getTodayDate, 
   getStorageData, 
-  updateUsage,
-  getUsage,
-  getLimit
+  updateUsage
 } from './utils';
-import type { StorageData, RuntimeState, LimitReachedPayload } from './types';
+import type { RuntimeState, LimitReachedPayload } from './types';
 
 const API_ENDPOINT = 'http://localhost:8000/limit-reached';
 const ALARM_NAME = 'checkLimits';
@@ -43,7 +41,7 @@ async function initializeTracking(): Promise<void> {
  * Restore tracking state from storage (service workers are ephemeral)
  */
 async function restoreState(): Promise<void> {
-  const sessionData = await chrome.storage.session.get(['currentDomain', 'startTime', 'lastActiveTime']);
+  const sessionData = await getRuntimeState();
   const data = await getStorageData();
   
   // Check if we were tracking something
@@ -201,10 +199,22 @@ async function startTracking(domain: string): Promise<void> {
 }
 
 /**
+ * Get runtime state from session storage with proper typing
+ */
+async function getRuntimeState(): Promise<RuntimeState> {
+  const result = await chrome.storage.session.get(['currentDomain', 'startTime', 'lastActiveTime']);
+  return {
+    currentDomain: result.currentDomain ?? null,
+    startTime: result.startTime ?? null,
+    lastActiveTime: result.lastActiveTime ?? Date.now(),
+  };
+}
+
+/**
  * Stop tracking and update usage
  */
 async function stopTracking(): Promise<void> {
-  const sessionData = await chrome.storage.session.get(['currentDomain', 'startTime']) as RuntimeState;
+  const sessionData = await getRuntimeState();
   
   if (sessionData.currentDomain && sessionData.startTime) {
     const now = Date.now();
@@ -252,7 +262,7 @@ async function handleAlarm(alarm: chrome.alarms.Alarm): Promise<void> {
     await checkDailyReset();
     
     // Update current tracking session if active
-    const sessionData = await chrome.storage.session.get(['currentDomain', 'startTime']) as RuntimeState;
+    const sessionData = await getRuntimeState();
     
     if (sessionData.currentDomain && sessionData.startTime) {
       // Check if still on tracked domain and window is focused

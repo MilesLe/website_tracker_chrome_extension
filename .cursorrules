@@ -1,0 +1,54 @@
+# Cursor Rules for Website Tracker Chrome Extension
+
+## Project Structure
+- Frontend: Chrome extension in `extension/` using TypeScript, React, and Vite
+- Backend: FastAPI application in `backend/` using Python 3.10+
+- Use TypeScript for all extension code
+- Use Python type hints for all backend code
+
+## Code Style
+
+### TypeScript/React
+- Use functional components with hooks
+- Prefer `const` over `let`, avoid `var`
+- Use TypeScript strict mode
+- Use meaningful variable and function names
+- Prefer async/await over promises
+- Use Chrome Extension API types from `@types/chrome`
+- Follow React best practices: memoization when needed, proper dependency arrays
+
+### Python/FastAPI
+- Use type hints for all function parameters and return types
+- Follow PEP 8 style guide
+- Use Pydantic models for request/response validation
+- Use async/await for async operations
+- Document functions with docstrings
+
+## Testing
+- Write unit tests for utility functions
+- Test Chrome extension APIs with mocks
+- Use Vitest for frontend tests
+- Use pytest for backend tests (if added)
+- Aim for good test coverage
+
+## Chrome Extension Specific
+- Always check Chrome API availability before use
+- Handle errors gracefully in background scripts
+- Use proper message passing between content scripts, background, and popup
+- Follow Chrome extension security best practices
+- Validate all user inputs
+
+## API Design
+- Use RESTful conventions for backend endpoints
+- Return appropriate HTTP status codes
+- Include error messages in API responses
+- Use Pydantic models for request validation
+
+## General Guidelines
+- Write clear, self-documenting code
+- Add comments for complex logic
+- Keep functions small and focused
+- Avoid code duplication
+- Handle errors explicitly
+- Use environment variables for configuration
+- Never commit secrets or API keys

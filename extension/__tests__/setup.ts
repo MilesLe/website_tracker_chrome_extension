@@ -1,7 +1,9 @@
 import { vi } from 'vitest';
+import type { MockChrome } from './global.d';
+import type { StorageData } from '../src/types';
 
 // Mock chrome APIs
-const mockChrome = {
+const mockChrome: MockChrome = {
   storage: {
     local: {
       get: vi.fn(),
@@ -58,31 +60,55 @@ const mockChrome = {
   },
 };
 
-// @ts-ignore
-global.chrome = mockChrome;
+// Set up global chrome mock with proper typing
+// Using globalThis ensures cross-environment compatibility
+// Type assertion needed because we're replacing the real chrome type with our mock
+(globalThis as any).chrome = mockChrome;
 
-// Helper to create mock storage data
-export function createMockStorageData(overrides = {}) {
+// Export typed getter for convenience in tests
+// This helper provides type-safe access to the mocked chrome API
+export function getMockChrome(): MockChrome {
+  return (globalThis as any).chrome;
+}
+
+// Shorthand helper for accessing chrome mock with proper typing
+export const chrome = () => (globalThis as any).chrome as MockChrome;
+
+// Helper to create mock storage data with proper typing
+export function createMockStorageData(
+  overrides: Partial<StorageData> = {}
+): StorageData {
+  const today = new Date().toISOString().split('T')[0];
   return {
     trackedSites: {},
     usage: {},
-    lastResetDate: new Date().toISOString().split('T')[0],
+    lastResetDate: today,
     ...overrides,
   };
 }
 
 // Helper to reset all mocks
-export function resetMocks() {
-  Object.values(mockChrome.storage.local).forEach((fn: any) => {
-    if (typeof fn === 'function' && 'mockClear' in fn) {
+// Using type guards to safely check for mock methods
+function isMockFunction(fn: unknown): fn is { mockClear: () => void } {
+  return typeof fn === 'function' && 'mockClear' in fn;
+}
+
+export function resetMocks(): void {
+  // Reset storage.local mocks
+  Object.values(mockChrome.storage.local).forEach((fn) => {
+    if (isMockFunction(fn)) {
       fn.mockClear();
     }
   });
-  Object.values(mockChrome.storage.session).forEach((fn: any) => {
-    if (typeof fn === 'function' && 'mockClear' in fn) {
+  
+  // Reset storage.session mocks
+  Object.values(mockChrome.storage.session).forEach((fn) => {
+    if (isMockFunction(fn)) {
       fn.mockClear();
     }
   });
+  
+  // Reset other mocks
   mockChrome.tabs.query.mockClear();
   mockChrome.tabs.get.mockClear();
   mockChrome.windows.getCurrent.mockClear();

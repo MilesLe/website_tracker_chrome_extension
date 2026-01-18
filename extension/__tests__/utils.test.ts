@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { chrome } from './setup';
 import {
   extractDomain,
   isDomainTracked,
@@ -13,8 +14,7 @@ import { createMockStorageData, resetMocks } from './setup';
 describe('utils', () => {
   beforeEach(() => {
     resetMocks();
-    // @ts-ignore
-    global.chrome.storage.local.get.mockResolvedValue(createMockStorageData());
+    chrome().storage.local.get.mockResolvedValue(createMockStorageData());
   });
 
   describe('extractDomain', () => {
@@ -77,8 +77,7 @@ describe('utils', () => {
 
   describe('getStorageData', () => {
     it('should return storage data with defaults', async () => {
-      // @ts-ignore
-      global.chrome.storage.local.get.mockResolvedValue({});
+      chrome().storage.local.get.mockResolvedValue({});
       
       const data = await getStorageData();
       expect(data.trackedSites).toEqual({});
@@ -103,18 +102,16 @@ describe('utils', () => {
   describe('updateUsage', () => {
     it('should add usage for a domain', async () => {
       const today = getTodayDate();
-      // @ts-ignore
-      global.chrome.storage.local.get.mockResolvedValue({
+      chrome().storage.local.get.mockResolvedValue({
         trackedSites: {},
         usage: {},
         lastResetDate: today,
       });
-      // @ts-ignore
-      global.chrome.storage.local.set.mockResolvedValue(undefined);
+      chrome().storage.local.set.mockResolvedValue(undefined);
       
       await updateUsage('youtube.com', 30);
       
-      expect(global.chrome.storage.local.set).toHaveBeenCalledWith({
+      expect(chrome().storage.local.set).toHaveBeenCalledWith({
         usage: {
           [today]: {
             'youtube.com': 30,
@@ -125,8 +122,7 @@ describe('utils', () => {
 
     it('should accumulate usage for existing domain', async () => {
       const today = getTodayDate();
-      // @ts-ignore
-      global.chrome.storage.local.get.mockResolvedValue({
+      chrome().storage.local.get.mockResolvedValue({
         trackedSites: {},
         usage: {
           [today]: {
@@ -135,12 +131,11 @@ describe('utils', () => {
         },
         lastResetDate: today,
       });
-      // @ts-ignore
-      global.chrome.storage.local.set.mockResolvedValue(undefined);
+      chrome().storage.local.set.mockResolvedValue(undefined);
       
       await updateUsage('youtube.com', 15);
       
-      expect(global.chrome.storage.local.set).toHaveBeenCalledWith({
+      expect(chrome().storage.local.set).toHaveBeenCalledWith({
         usage: {
           [today]: {
             'youtube.com': 45,
@@ -153,8 +148,7 @@ describe('utils', () => {
   describe('getUsage', () => {
     it('should return usage for a domain', async () => {
       const today = getTodayDate();
-      // @ts-ignore
-      global.chrome.storage.local.get.mockResolvedValue({
+      chrome().storage.local.get.mockResolvedValue({
         trackedSites: {},
         usage: {
           [today]: {
@@ -170,8 +164,7 @@ describe('utils', () => {
 
     it('should return 0 for domain with no usage', async () => {
       const today = getTodayDate();
-      // @ts-ignore
-      global.chrome.storage.local.get.mockResolvedValue({
+      chrome().storage.local.get.mockResolvedValue({
         trackedSites: {},
         usage: {},
         lastResetDate: today,
@@ -184,8 +177,7 @@ describe('utils', () => {
 
   describe('getLimit', () => {
     it('should return limit for tracked domain', async () => {
-      // @ts-ignore
-      global.chrome.storage.local.get.mockResolvedValue({
+      chrome().storage.local.get.mockResolvedValue({
         trackedSites: { 'youtube.com': 60 },
         usage: {},
         lastResetDate: getTodayDate(),
@@ -196,8 +188,7 @@ describe('utils', () => {
     });
 
     it('should return null for untracked domain', async () => {
-      // @ts-ignore
-      global.chrome.storage.local.get.mockResolvedValue({
+      chrome().storage.local.get.mockResolvedValue({
         trackedSites: { 'youtube.com': 60 },
         usage: {},
         lastResetDate: getTodayDate(),

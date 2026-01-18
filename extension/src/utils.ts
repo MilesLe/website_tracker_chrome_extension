@@ -1,4 +1,4 @@
-import type { StorageData, TrackedSites, DailyUsage } from './types';
+import type { StorageData, TrackedSites, UsageData } from './types';
 
 /**
  * Extract domain from a URL, handling subdomains
@@ -75,6 +75,42 @@ export function getTodayDate(): string {
 }
 
 /**
+ * Type guard to check if value is a TrackedSites object
+ */
+function isTrackedSites(value: unknown): value is TrackedSites {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.values(value).every((v) => typeof v === 'number')
+  );
+}
+
+/**
+ * Type guard to check if value is a UsageData object
+ */
+function isUsageData(value: unknown): value is UsageData {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.values(value).every((v) => 
+      typeof v === 'object' && 
+      v !== null && 
+      !Array.isArray(v) &&
+      Object.values(v).every((usage) => typeof usage === 'number')
+    )
+  );
+}
+
+/**
+ * Type guard to check if value is a valid date string
+ */
+function isDateString(value: unknown): value is string {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+/**
  * Get all storage data with defaults
  * @returns Promise resolving to StorageData
  */
@@ -82,9 +118,9 @@ export async function getStorageData(): Promise<StorageData> {
   const result = await chrome.storage.local.get(['trackedSites', 'usage', 'lastResetDate']);
   
   return {
-    trackedSites: result.trackedSites || {},
-    usage: result.usage || {},
-    lastResetDate: result.lastResetDate || getTodayDate(),
+    trackedSites: isTrackedSites(result.trackedSites) ? result.trackedSites : {},
+    usage: isUsageData(result.usage) ? result.usage : {},
+    lastResetDate: isDateString(result.lastResetDate) ? result.lastResetDate : getTodayDate(),
   };
 }
 
