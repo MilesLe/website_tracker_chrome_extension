@@ -210,8 +210,9 @@ Service workers in Manifest V3 are **ephemeral** - they can be terminated at any
 
 ### Prerequisites
 
-- **Node.js** 20+ (LTS recommended) and npm 10+
-- **Python** 3.10+ (3.12 recommended, but 3.10+ works fine) (for backend)
+- **Node.js** 20+ and npm 10+
+- **Python** 3.10+ (3.14 recommended, for backend)
+- **uv** - Python package manager (for backend)
 - **Chrome Browser** (for testing)
 
 #### Installing/Upgrading Node.js and Python
@@ -232,14 +233,9 @@ Service workers in Manifest V3 are **ephemeral** - they can be terminated at any
 - Or use Homebrew: `brew install node`
 
 **Python:**
-- Check current version: `python3 --version`
-- If `pyenv` is not installed, see [SETUP_GUIDE.md](SETUP_GUIDE.md) for installation instructions
-- Once pyenv is installed:
-  ```bash
-  pyenv install 3.12
-  pyenv global 3.12
-  ```
-- Or use Homebrew: `brew install python@3.12`
+- Install uv: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- Install Python 3.14: `uv python install 3.14`
+- See [SETUP_GUIDE.md](SETUP_GUIDE.md) for detailed instructions
 
 ### Installation
 
@@ -415,104 +411,28 @@ The test setup (`__tests__/setup.ts`) provides mocked chrome APIs. Use `resetMoc
 
 ## Backend Setup
 
-### Python Environment Setup
+### Install uv
 
-This project **requires** a Python virtual environment to keep dependencies isolated. The virtual environment will be created in `backend/venv/`.
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# or: brew install uv
+```
 
-#### Quick Setup (Recommended)
+### Setup
 
-**macOS/Linux:**
 ```bash
 cd backend
 ./setup.sh
 ```
 
-**Windows:**
-```cmd
-cd backend
-setup.bat
-```
+### Run Server
 
-This automatically:
-- Creates a Python virtual environment
-- Installs all dependencies
-- Sets up the environment for use
-
-#### Manual Setup
-
-If you prefer manual setup:
-
-1. **Create virtual environment:**
-   ```bash
-   cd backend
-   python3 -m venv venv
-   ```
-
-2. **Activate virtual environment:**
-   
-   **macOS/Linux:**
-   ```bash
-   source venv/bin/activate
-   ```
-   
-   **Windows:**
-   ```cmd
-   venv\Scripts\activate.bat
-   ```
-
-3. **Install dependencies:**
-   ```bash
-   pip install --upgrade pip
-   pip install -r requirements.txt
-   ```
-
-### Running the Server
-
-#### Using the Run Script (Recommended)
-
-**macOS/Linux:**
 ```bash
 cd backend
 ./run.sh
 ```
 
-**Windows:**
-```cmd
-cd backend
-run.bat
-```
-
-The run script automatically activates the virtual environment and starts the server.
-
-#### Manual Run
-
-1. **Activate virtual environment** (if not already activated):
-   
-   **macOS/Linux:**
-   ```bash
-   cd backend
-   source venv/bin/activate
-   ```
-   
-   **Windows:**
-   ```cmd
-   cd backend
-   venv\Scripts\activate.bat
-   ```
-
-2. **Run the server:**
-   ```bash
-   python main.py
-   ```
-
-   Or using uvicorn directly:
-   ```bash
-   uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-   ```
-
-The server will start on `http://localhost:8000`
-
-**Note:** Always activate the virtual environment before running the server. The virtual environment ensures that the correct Python version and packages are used for this project.
+Server runs on `http://localhost:8000`
 
 ### API Endpoint Documentation
 

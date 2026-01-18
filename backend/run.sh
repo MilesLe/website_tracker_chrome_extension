@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run script that activates venv and starts the server
+# Run script that uses uv to start the server
 
 set -e
 
@@ -7,28 +7,28 @@ set -e
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
 
-# Check for pyenv and .python-version file
-if [ -f ".python-version" ] && command -v pyenv &> /dev/null; then
-    PYTHON_VERSION=$(cat .python-version)
-    # Ensure pyenv uses the correct version
-    eval "$(pyenv init -)"
-    pyenv local "$PYTHON_VERSION" 2>/dev/null || true
+# Check if uv is installed
+if ! command -v uv &> /dev/null; then
+    echo "Error: uv is not installed."
+    echo ""
+    echo "Please install uv first:"
+    echo "  curl -LsSf https://astral.sh/uv/install.sh | sh"
+    echo ""
+    echo "Or on macOS with Homebrew:"
+    echo "  brew install uv"
+    exit 1
 fi
 
+# Handle Python version (uv will automatically use the correct version from .python-version or .venv)
+# No need to manually set UV_PYTHON - uv handles this automatically
+
 # Check if virtual environment exists
-if [ ! -d "venv" ]; then
+if [ ! -d ".venv" ]; then
     echo "Virtual environment not found. Running setup..."
     ./setup.sh
 fi
 
-# Activate virtual environment
-source venv/bin/activate
-
-# Verify we're using the venv Python
-VENV_PYTHON=$(which python)
-echo "Using Python from: $VENV_PYTHON"
-
-# Run the server
-echo "Starting FastAPI server..."
-python main.py
+# Run the server using uv
+echo "Starting FastAPI server with uv..."
+uv run python -m website_tracker_backend
 

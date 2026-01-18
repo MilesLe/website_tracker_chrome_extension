@@ -1,3 +1,6 @@
+"""
+FastAPI application with all routes and endpoints.
+"""
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -65,9 +68,3 @@ async def limit_reached(payload: LimitReachedPayload):
     except Exception as e:
         logger.error(f"Error processing limit-reached notification: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-
