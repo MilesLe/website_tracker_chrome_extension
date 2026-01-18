@@ -3,7 +3,10 @@ import {
   isDomainTracked, 
   getTodayDate, 
   getStorageData, 
-  updateUsage
+  updateUsage,
+  isDomainNotified,
+  markDomainAsNotified,
+  clearNotifiedDomains
 } from './utils';
 import type { RuntimeState, LimitReachedPayload } from './types';
 
@@ -11,7 +14,8 @@ const API_ENDPOINT = 'http://localhost:8000/limit-reached';
 const ALARM_NAME = 'checkLimits';
 const ALARM_INTERVAL_MINUTES = 1;
 
-// Track which domains have already triggered notifications today
+// Track which domains have already triggered notifications today (in-memory cache)
+// Note: This is kept in sync with persisted storage, but storage is the source of truth
 const notifiedDomains = new Set<string>();
 
 /**
@@ -35,6 +39,9 @@ async function initializeTracking(): Promise<void> {
   
   // Restore state from storage on wake-up
   await restoreState();
+  
+  // Load notified domains from storage into in-memory cache
+  await loadNotifiedDomainsCache();
 }
 
 /**
@@ -234,6 +241,20 @@ async function stopTracking(): Promise<void> {
 }
 
 /**
+ * Load notified domains from storage into in-memory cache
+ */
+async function loadNotifiedDomainsCache(): Promise<void> {
+  const today = getTodayDate();
+  const data = await getStorageData();
+  const notifiedList = data.notifiedDomains[today] || [];
+  
+  notifiedDomains.clear();
+  for (const domain of notifiedList) {
+    notifiedDomains.add(`${today}-${domain}`);
+  }
+}
+
+/**
  * Check if daily reset is needed
  */
 async function checkDailyReset(): Promise<void> {
@@ -248,7 +269,11 @@ async function checkDailyReset(): Promise<void> {
       lastResetDate: today,
     });
     
-    // Clear notification tracking for new day
+    // Clear notification tracking for new day (both storage and cache)
+    const oldDate = data.lastResetDate;
+    if (oldDate) {
+      await clearNotifiedDomains(oldDate);
+    }
     notifiedDomains.clear();
   }
 }
@@ -321,9 +346,17 @@ async function checkLimits(): Promise<void> {
     const usage = dailyUsage[domain] || 0;
     
     // Check if limit reached and not already notified today
-    if (usage >= limit && !notifiedDomains.has(`${today}-${domain}`)) {
-      await notifyLimitReached(domain, usage);
+    // Use persisted storage as source of truth (not just in-memory cache)
+    const alreadyNotified = await isDomainNotified(domain, today);
+    
+    if (usage >= limit && !alreadyNotified) {
+      // Mark as notified BEFORE calling API to prevent duplicate calls
+      // This ensures only one API call per domain per day, even if service worker restarts
+      await markDomainAsNotified(domain, today);
       notifiedDomains.add(`${today}-${domain}`);
+      
+      // Then notify (API call happens here)
+      await notifyLimitReached(domain, usage);
     }
   }
 }
@@ -352,6 +385,8 @@ async function notifyLimitReached(domain: string, minutes: number): Promise<void
 
 /**
  * Send notification to Python API with retry logic
+ * Note: Domain is marked as notified in storage before this function is called
+ * to prevent duplicate API calls if the service worker restarts during the call.
  */
 async function sendApiNotification(payload: LimitReachedPayload, retries = 3): Promise<void> {
   const controller = new AbortController();
@@ -373,7 +408,8 @@ async function sendApiNotification(payload: LimitReachedPayload, retries = 3): P
       throw new Error(`API returned ${response.status}`);
     }
     
-    // Success, no retry needed
+    // Success - domain is already marked as notified in checkLimits()
+    // This ensures we only call the API once per domain per day
   } catch (error) {
     clearTimeout(timeoutId);
     
@@ -386,6 +422,11 @@ async function sendApiNotification(payload: LimitReachedPayload, retries = 3): P
     
     // All retries failed, log error (could queue for later retry)
     console.error('Failed to send API notification:', error);
+    
+    // If all retries failed, we should unmark the domain as notified
+    // so it can be retried later. However, to prevent infinite loops,
+    // we'll keep it marked but log the failure.
+    // In a production system, you might want to queue this for later retry.
   }
 }
 

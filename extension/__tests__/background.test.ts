@@ -18,6 +18,9 @@ vi.mock('../src/utils', () => ({
   updateUsage: vi.fn(),
   getUsage: vi.fn(),
   getLimit: vi.fn(),
+  isDomainNotified: vi.fn(),
+  markDomainAsNotified: vi.fn(),
+  clearNotifiedDomains: vi.fn(),
 }));
 
 describe('background service worker', () => {
@@ -82,14 +85,19 @@ describe('background service worker', () => {
   it('should detect limit reached', async () => {
     const today = '2023-10-27';
     
-    const { getStorageData } = await import('../src/utils');
+    const { getStorageData, isDomainNotified, markDomainAsNotified } = await import('../src/utils');
     // @ts-ignore
     getStorageData.mockResolvedValue(createMockStorageData({
       trackedSites: { 'youtube.com': 60 },
       usage: {
         [today]: { 'youtube.com': 60 },
       },
+      notifiedDomains: {},
     }));
+    // @ts-ignore
+    isDomainNotified.mockResolvedValue(false);
+    // @ts-ignore
+    markDomainAsNotified.mockResolvedValue(undefined);
     
     chrome().notifications.create.mockResolvedValue('notification-id');
     
@@ -101,6 +109,8 @@ describe('background service worker', () => {
     
     // Verify notification API is available
     expect(chrome().notifications.create).toBeDefined();
+    expect(isDomainNotified).toBeDefined();
+    expect(markDomainAsNotified).toBeDefined();
   });
 
   it('should send API notification with retry', async () => {

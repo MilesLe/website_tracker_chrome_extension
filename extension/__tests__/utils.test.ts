@@ -8,6 +8,9 @@ import {
   updateUsage,
   getUsage,
   getLimit,
+  isDomainNotified,
+  markDomainAsNotified,
+  clearNotifiedDomains,
 } from '../src/utils';
 import { createMockStorageData, resetMocks } from './setup';
 
@@ -83,6 +86,7 @@ describe('utils', () => {
       expect(data.trackedSites).toEqual({});
       expect(data.usage).toEqual({});
       expect(data.lastResetDate).toBe(getTodayDate());
+      expect(data.notifiedDomains).toEqual({});
     });
 
     it('should return existing storage data', async () => {
@@ -90,6 +94,7 @@ describe('utils', () => {
         trackedSites: { 'youtube.com': 60 },
         usage: { '2023-10-27': { 'youtube.com': 30 } },
         lastResetDate: '2023-10-27',
+        notifiedDomains: { '2023-10-27': ['youtube.com'] },
       };
       // @ts-ignore
       global.chrome.storage.local.get.mockResolvedValue(mockData);
@@ -106,6 +111,7 @@ describe('utils', () => {
         trackedSites: {},
         usage: {},
         lastResetDate: today,
+        notifiedDomains: {},
       });
       chrome().storage.local.set.mockResolvedValue(undefined);
       
@@ -130,6 +136,7 @@ describe('utils', () => {
           },
         },
         lastResetDate: today,
+        notifiedDomains: {},
       });
       chrome().storage.local.set.mockResolvedValue(undefined);
       
@@ -156,6 +163,7 @@ describe('utils', () => {
           },
         },
         lastResetDate: today,
+        notifiedDomains: {},
       });
       
       const usage = await getUsage('youtube.com');
@@ -168,6 +176,7 @@ describe('utils', () => {
         trackedSites: {},
         usage: {},
         lastResetDate: today,
+        notifiedDomains: {},
       });
       
       const usage = await getUsage('youtube.com');
@@ -181,6 +190,7 @@ describe('utils', () => {
         trackedSites: { 'youtube.com': 60 },
         usage: {},
         lastResetDate: getTodayDate(),
+        notifiedDomains: {},
       });
       
       const limit = await getLimit('youtube.com');
@@ -192,10 +202,211 @@ describe('utils', () => {
         trackedSites: { 'youtube.com': 60 },
         usage: {},
         lastResetDate: getTodayDate(),
+        notifiedDomains: {},
       });
       
       const limit = await getLimit('reddit.com');
       expect(limit).toBeNull();
+    });
+  });
+
+  describe('isDomainNotified', () => {
+    it('should return true if domain was notified today', async () => {
+      const today = getTodayDate();
+      chrome().storage.local.get.mockResolvedValue({
+        trackedSites: {},
+        usage: {},
+        lastResetDate: today,
+        notifiedDomains: {
+          [today]: ['youtube.com'],
+        },
+      });
+      
+      const notified = await isDomainNotified('youtube.com');
+      expect(notified).toBe(true);
+    });
+
+    it('should return false if domain was not notified today', async () => {
+      const today = getTodayDate();
+      chrome().storage.local.get.mockResolvedValue({
+        trackedSites: {},
+        usage: {},
+        lastResetDate: today,
+        notifiedDomains: {
+          [today]: ['reddit.com'],
+        },
+      });
+      
+      const notified = await isDomainNotified('youtube.com');
+      expect(notified).toBe(false);
+    });
+
+    it('should return false if no domains were notified today', async () => {
+      const today = getTodayDate();
+      chrome().storage.local.get.mockResolvedValue({
+        trackedSites: {},
+        usage: {},
+        lastResetDate: today,
+        notifiedDomains: {},
+      });
+      
+      const notified = await isDomainNotified('youtube.com');
+      expect(notified).toBe(false);
+    });
+
+    it('should check specific date when provided', async () => {
+      chrome().storage.local.get.mockResolvedValue({
+        trackedSites: {},
+        usage: {},
+        lastResetDate: '2023-10-27',
+        notifiedDomains: {
+          '2023-10-27': ['youtube.com'],
+          '2023-10-28': [],
+        },
+      });
+      
+      const notified = await isDomainNotified('youtube.com', '2023-10-27');
+      expect(notified).toBe(true);
+      
+      const notNotified = await isDomainNotified('youtube.com', '2023-10-28');
+      expect(notNotified).toBe(false);
+    });
+  });
+
+  describe('markDomainAsNotified', () => {
+    it('should mark domain as notified for today', async () => {
+      const today = getTodayDate();
+      chrome().storage.local.get.mockResolvedValue({
+        trackedSites: {},
+        usage: {},
+        lastResetDate: today,
+        notifiedDomains: {},
+      });
+      chrome().storage.local.set.mockResolvedValue(undefined);
+      
+      await markDomainAsNotified('youtube.com');
+      
+      expect(chrome().storage.local.set).toHaveBeenCalledWith({
+        notifiedDomains: {
+          [today]: ['youtube.com'],
+        },
+      });
+    });
+
+    it('should add domain to existing notified list', async () => {
+      const today = getTodayDate();
+      chrome().storage.local.get.mockResolvedValue({
+        trackedSites: {},
+        usage: {},
+        lastResetDate: today,
+        notifiedDomains: {
+          [today]: ['reddit.com'],
+        },
+      });
+      chrome().storage.local.set.mockResolvedValue(undefined);
+      
+      await markDomainAsNotified('youtube.com');
+      
+      expect(chrome().storage.local.set).toHaveBeenCalledWith({
+        notifiedDomains: {
+          [today]: ['reddit.com', 'youtube.com'],
+        },
+      });
+    });
+
+    it('should not add duplicate domain', async () => {
+      const today = getTodayDate();
+      chrome().storage.local.get.mockResolvedValue({
+        trackedSites: {},
+        usage: {},
+        lastResetDate: today,
+        notifiedDomains: {
+          [today]: ['youtube.com'],
+        },
+      });
+      chrome().storage.local.set.mockResolvedValue(undefined);
+      
+      await markDomainAsNotified('youtube.com');
+      
+      // Should not call set if domain is already in the list
+      expect(chrome().storage.local.set).not.toHaveBeenCalled();
+    });
+
+    it('should mark domain for specific date when provided', async () => {
+      chrome().storage.local.get.mockResolvedValue({
+        trackedSites: {},
+        usage: {},
+        lastResetDate: '2023-10-27',
+        notifiedDomains: {},
+      });
+      chrome().storage.local.set.mockResolvedValue(undefined);
+      
+      await markDomainAsNotified('youtube.com', '2023-10-28');
+      
+      expect(chrome().storage.local.set).toHaveBeenCalledWith({
+        notifiedDomains: {
+          '2023-10-28': ['youtube.com'],
+        },
+      });
+    });
+  });
+
+  describe('clearNotifiedDomains', () => {
+    it('should clear notified domains for today', async () => {
+      const today = getTodayDate();
+      chrome().storage.local.get.mockResolvedValue({
+        trackedSites: {},
+        usage: {},
+        lastResetDate: today,
+        notifiedDomains: {
+          [today]: ['youtube.com', 'reddit.com'],
+        },
+      });
+      chrome().storage.local.set.mockResolvedValue(undefined);
+      
+      await clearNotifiedDomains();
+      
+      expect(chrome().storage.local.set).toHaveBeenCalledWith({
+        notifiedDomains: {},
+      });
+    });
+
+    it('should clear notified domains for specific date', async () => {
+      chrome().storage.local.get.mockResolvedValue({
+        trackedSites: {},
+        usage: {},
+        lastResetDate: '2023-10-27',
+        notifiedDomains: {
+          '2023-10-27': ['youtube.com'],
+          '2023-10-28': ['reddit.com'],
+        },
+      });
+      chrome().storage.local.set.mockResolvedValue(undefined);
+      
+      await clearNotifiedDomains('2023-10-27');
+      
+      expect(chrome().storage.local.set).toHaveBeenCalledWith({
+        notifiedDomains: {
+          '2023-10-28': ['reddit.com'],
+        },
+      });
+    });
+
+    it('should not modify storage if date does not exist', async () => {
+      chrome().storage.local.get.mockResolvedValue({
+        trackedSites: {},
+        usage: {},
+        lastResetDate: '2023-10-27',
+        notifiedDomains: {
+          '2023-10-27': ['youtube.com'],
+        },
+      });
+      chrome().storage.local.set.mockResolvedValue(undefined);
+      
+      await clearNotifiedDomains('2023-10-28');
+      
+      // Should not call set if date doesn't exist
+      expect(chrome().storage.local.set).not.toHaveBeenCalled();
     });
   });
 });

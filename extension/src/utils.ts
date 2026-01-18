@@ -1,4 +1,4 @@
-import type { StorageData, TrackedSites, UsageData } from './types';
+import type { StorageData, TrackedSites, UsageData, NotifiedDomains } from './types';
 
 /**
  * Extract domain from a URL, handling subdomains
@@ -139,16 +139,31 @@ function isDateString(value: unknown): value is string {
 }
 
 /**
+ * Type guard to check if value is a NotifiedDomains object
+ */
+function isNotifiedDomains(value: unknown): value is NotifiedDomains {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.values(value).every((v) => 
+      Array.isArray(v) && v.every((item) => typeof item === 'string')
+    )
+  );
+}
+
+/**
  * Get all storage data with defaults
  * @returns Promise resolving to StorageData
  */
 export async function getStorageData(): Promise<StorageData> {
-  const result = await chrome.storage.local.get(['trackedSites', 'usage', 'lastResetDate']);
+  const result = await chrome.storage.local.get(['trackedSites', 'usage', 'lastResetDate', 'notifiedDomains']);
   
   return {
     trackedSites: isTrackedSites(result.trackedSites) ? result.trackedSites : {},
     usage: isUsageData(result.usage) ? result.usage : {},
     lastResetDate: isDateString(result.lastResetDate) ? result.lastResetDate : getTodayDate(),
+    notifiedDomains: isNotifiedDomains(result.notifiedDomains) ? result.notifiedDomains : {},
   };
 }
 
@@ -202,5 +217,56 @@ export async function getLimit(domain: string): Promise<number | null> {
   }
   
   return null;
+}
+
+/**
+ * Check if a domain has been notified today
+ * @param domain - Domain to check
+ * @param date - Date string (defaults to today)
+ * @returns Promise resolving to true if domain was already notified
+ */
+export async function isDomainNotified(domain: string, date?: string): Promise<boolean> {
+  const today = date || getTodayDate();
+  const data = await getStorageData();
+  const notifiedList = data.notifiedDomains[today] || [];
+  return notifiedList.includes(domain);
+}
+
+/**
+ * Mark a domain as notified for today
+ * @param domain - Domain to mark as notified
+ * @param date - Date string (defaults to today)
+ */
+export async function markDomainAsNotified(domain: string, date?: string): Promise<void> {
+  const today = date || getTodayDate();
+  const data = await getStorageData();
+  
+  if (!data.notifiedDomains[today]) {
+    data.notifiedDomains[today] = [];
+  }
+  
+  // Only add if not already in the list
+  if (!data.notifiedDomains[today].includes(domain)) {
+    data.notifiedDomains[today].push(domain);
+    await chrome.storage.local.set({
+      notifiedDomains: data.notifiedDomains,
+    });
+  }
+}
+
+/**
+ * Clear notified domains for a specific date (used for daily reset)
+ * @param date - Date string (defaults to today)
+ */
+export async function clearNotifiedDomains(date?: string): Promise<void> {
+  const targetDate = date || getTodayDate();
+  const data = await getStorageData();
+  
+  if (data.notifiedDomains[targetDate]) {
+    delete data.notifiedDomains[targetDate];
+    await chrome.storage.local.set({
+      notifiedDomains: data.notifiedDomains,
+    });
+  }
 }
 

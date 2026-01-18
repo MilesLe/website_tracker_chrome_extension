@@ -10,10 +10,15 @@ export interface UsageData {
   [date: string]: DailyUsage; // "YYYY-MM-DD" -> DailyUsage
 }
 
+export interface NotifiedDomains {
+  [date: string]: string[]; // "YYYY-MM-DD" -> array of domains that were notified
+}
+
 export interface StorageData {
   trackedSites: TrackedSites;
   usage: UsageData;
   lastResetDate: string;
+  notifiedDomains: NotifiedDomains;
 }
 
 export interface RuntimeState {

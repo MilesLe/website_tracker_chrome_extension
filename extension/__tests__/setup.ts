@@ -84,6 +84,7 @@ export function createMockStorageData(
     trackedSites: {},
     usage: {},
     lastResetDate: today,
+    notifiedDomains: {},
     ...overrides,
   };
 }
