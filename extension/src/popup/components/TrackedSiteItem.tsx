@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Collapse } from '@mui/material';
 import styled from '@emotion/styled';
 import ProgressBar from './ProgressBar';
 import { getFaviconUrl, getDomainInitial } from '../utils/favicon';
@@ -31,10 +31,11 @@ const StyledCell = styled(Box, {
     isOverLimit 
       ? theme.palette.error.main 
       : theme.palette.success.main};
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   padding: ${({ isExpanded }) => (isExpanded ? '12px' : '8px 12px')};
-  min-height: ${({ isExpanded }) => (isExpanded ? 'auto' : '40px')};
   overflow: hidden;
   position: relative;
   isolation: isolate;
@@ -101,6 +102,18 @@ const StyledExpandedContent = styled(Box)`
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid ${({ theme }) => theme.palette.divider};
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 `;
 
 const StyledTimeText = styled(Typography)`
@@ -195,7 +208,11 @@ export default function TrackedSiteItem({ site }: TrackedSiteItemProps) {
         </StyledDomainName>
       </StyledCompactContent>
       
-      {isExpanded && (
+      <Collapse 
+        in={isExpanded} 
+        timeout={300}
+        easing={{ enter: 'cubic-bezier(0.4, 0, 0.2, 1)', exit: 'cubic-bezier(0.4, 0, 0.2, 1)' }}
+      >
         <StyledExpandedContent>
           <StyledTimeText>
             {site.usage.toFixed(1)} / {site.limit} minutes
@@ -212,7 +229,7 @@ export default function TrackedSiteItem({ site }: TrackedSiteItemProps) {
             />
           </StyledProgressContainer>
         </StyledExpandedContent>
-      )}
+      </Collapse>
     </StyledCell>
   );
 }

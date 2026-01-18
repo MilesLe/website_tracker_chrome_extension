@@ -56,16 +56,21 @@ describe('TrackedSiteItem', () => {
     const clickableCell = screen.getByTestId('tracked-site-youtube.com');
     expect(clickableCell).toBeInTheDocument();
 
-    // Initially, expanded content should not be visible
-    expect(screen.queryByText(/30.0 \/ 60 minutes/)).not.toBeInTheDocument();
+    // Initially, expanded content should not be visible (Collapse keeps it in DOM but hidden)
+    const timeText = screen.queryByText(/30.0 \/ 60 minutes/);
+    if (timeText) {
+      expect(timeText).not.toBeVisible();
+    }
 
     // Hover over the cell
     await user.hover(clickableCell);
     
     await waitFor(() => {
-      expect(screen.getByText(/30.0 \/ 60 minutes/)).toBeInTheDocument();
-      expect(screen.getByText(/50.0%/)).toBeInTheDocument();
-    }, { timeout: 2000 });
+      const expandedTimeText = screen.getByText(/30.0 \/ 60 minutes/);
+      expect(expandedTimeText).toBeVisible();
+      const percentageText = screen.getByText(/50.0%/);
+      expect(percentageText).toBeVisible();
+    }, { timeout: 1000 });
   });
 
   it('should expand on click for mobile support', async () => {
@@ -74,16 +79,21 @@ describe('TrackedSiteItem', () => {
     const clickableCell = screen.getByTestId('tracked-site-youtube.com');
     expect(clickableCell).toBeInTheDocument();
 
-    // Initially, expanded content should not be visible
-    expect(screen.queryByText(/30.0 \/ 60 minutes/)).not.toBeInTheDocument();
+    // Initially, expanded content should not be visible (Collapse keeps it in DOM but hidden)
+    const timeText = screen.queryByText(/30.0 \/ 60 minutes/);
+    if (timeText) {
+      expect(timeText).not.toBeVisible();
+    }
 
     // Click the cell using fireEvent for more reliable testing
     fireEvent.click(clickableCell);
     
     await waitFor(() => {
-      expect(screen.getByText(/30.0 \/ 60 minutes/)).toBeInTheDocument();
-      expect(screen.getByText(/50.0%/)).toBeInTheDocument();
-    }, { timeout: 2000 });
+      const expandedTimeText = screen.getByText(/30.0 \/ 60 minutes/);
+      expect(expandedTimeText).toBeVisible();
+      const percentageText = screen.getByText(/50.0%/);
+      expect(percentageText).toBeVisible();
+    }, { timeout: 1000 });
   });
 
   it('should collapse when clicking again', async () => {
@@ -95,14 +105,21 @@ describe('TrackedSiteItem', () => {
     // Click to expand
     fireEvent.click(clickableCell);
     await waitFor(() => {
-      expect(screen.getByText(/30.0 \/ 60 minutes/)).toBeInTheDocument();
-    }, { timeout: 2000 });
+      const expandedTimeText = screen.getByText(/30.0 \/ 60 minutes/);
+      expect(expandedTimeText).toBeVisible();
+    }, { timeout: 1000 });
 
     // Click again to collapse
     fireEvent.click(clickableCell);
     await waitFor(() => {
-      expect(screen.queryByText(/30.0 \/ 60 minutes/)).not.toBeInTheDocument();
-    }, { timeout: 2000 });
+      const timeText = screen.queryByText(/30.0 \/ 60 minutes/);
+      if (timeText) {
+        expect(timeText).not.toBeVisible();
+      } else {
+        // Content might be removed from DOM after collapse animation
+        expect(timeText).not.toBeInTheDocument();
+      }
+    }, { timeout: 1000 });
   });
 
   it('should display progress bar in expanded view', async () => {
@@ -115,8 +132,9 @@ describe('TrackedSiteItem', () => {
     await waitFor(() => {
       const progressBar = screen.getByRole('progressbar');
       expect(progressBar).toBeInTheDocument();
+      expect(progressBar).toBeVisible();
       expect(progressBar).toHaveAttribute('aria-valuenow', '50');
-    }, { timeout: 2000 });
+    }, { timeout: 1000 });
   });
 
   it('should format usage to one decimal place', async () => {
@@ -132,8 +150,9 @@ describe('TrackedSiteItem', () => {
     await user.hover(clickableCell);
     
     await waitFor(() => {
-      expect(screen.getByText(/30.6 \/ 60 minutes/)).toBeInTheDocument();
-    }, { timeout: 2000 });
+      const timeText = screen.getByText(/30.6 \/ 60 minutes/);
+      expect(timeText).toBeVisible();
+    }, { timeout: 1000 });
   });
 
   it('should show favicon or fallback initial', () => {
