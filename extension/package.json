@@ -12,11 +12,19 @@
     "icons:convert": "node scripts/svg-to-png.js"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.7",
+    "@mui/material": "^7.3.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.0-beta.21",
+    "@emotion/babel-plugin": "^11.13.5",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
+    "@testing-library/user-event": "^14.6.1",
     "@types/chrome": "^0.0.268",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import '@testing-library/jest-dom';
 import type { MockChrome } from './global.d';
 import type { StorageData } from '../src/types';
 

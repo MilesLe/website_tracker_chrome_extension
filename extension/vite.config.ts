@@ -5,7 +5,12 @@ import manifest from './manifest.json' assert { type: 'json' };
 
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      jsxImportSource: '@emotion/react',
+      babel: {
+        plugins: ['@emotion/babel-plugin'],
+      },
+    }),
     crx({ manifest }),
   ],
   build: {
