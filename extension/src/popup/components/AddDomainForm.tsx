@@ -10,16 +10,22 @@ interface AddDomainFormProps {
 }
 
 const StyledFormContainer = styled(Box)`
-  margin-bottom: 20px;
-  padding: 15px;
-  background-color: #f5f5f5;
-  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const StyledSectionTitle = styled(Typography)`
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 12px;
+  color: ${({ theme }) => theme.palette.text.primary};
 `;
 
 const StyledForm = styled('form')`
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 `;
 
 const StyledButton = styled(Button)`
@@ -74,9 +80,9 @@ export default function AddDomainForm({ onAddDomain, error, onClearError }: AddD
 
   return (
     <StyledFormContainer>
-      <Typography variant="h6" component="h2" sx={{ marginTop: 0, fontSize: '18px', marginBottom: '15px' }}>
+      <StyledSectionTitle variant="h3">
         Add Domain
-      </Typography>
+      </StyledSectionTitle>
       
       <StyledForm onSubmit={handleSubmit}>
         <TextField

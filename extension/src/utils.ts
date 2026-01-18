@@ -7,8 +7,18 @@ import type { StorageData, TrackedSites, UsageData } from './types';
  */
 export function extractDomain(url: string): string {
   try {
-    const urlObj = new URL(url);
+    // Try to parse as URL first (add protocol if missing)
+    let urlToParse = url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      urlToParse = `https://${url}`;
+    }
+    const urlObj = new URL(urlToParse);
     let hostname = urlObj.hostname;
+    
+    // Validate hostname looks like a domain (must contain at least one dot)
+    if (!hostname.includes('.')) {
+      return '';
+    }
     
     // Remove 'www.' prefix if present
     if (hostname.startsWith('www.')) {
@@ -18,20 +28,38 @@ export function extractDomain(url: string): string {
     // Extract root domain (handle cases like subdomain.example.com)
     const parts = hostname.split('.');
     if (parts.length >= 2) {
-      // Return last two parts (e.g., "example.com")
-      return parts.slice(-2).join('.');
+      // Validate TLD is at least 2 characters
+      if (parts[parts.length - 1].length >= 2) {
+        // Return last two parts (e.g., "example.com")
+        return parts.slice(-2).join('.');
+      }
     }
     
-    return hostname;
+    // If we get here, hostname doesn't look like a valid domain
+    return '';
   } catch (e) {
-    // If URL parsing fails, try to extract domain manually
-    const match = url.match(/(?:https?:\/\/)?(?:www\.)?([^\/]+)/);
+    // If URL parsing fails, check if it looks like a domain
+    // Only process if it contains a dot (domain-like) or has protocol
+    if (!url.includes('.')) {
+      // No dots means it's not a valid domain
+      return '';
+    }
+    
+    // Try to extract domain manually using regex
+    const match = url.match(/(?:https?:\/\/)?(?:www\.)?([^\/\s]+)/);
     if (match && match[1]) {
       let domain = match[1];
       if (domain.startsWith('www.')) {
         domain = domain.substring(4);
       }
-      return domain;
+      // Validate it looks like a domain (has at least one dot and valid TLD pattern)
+      if (domain.includes('.') && domain.split('.').length >= 2) {
+        const parts = domain.split('.');
+        // Must have at least 2 parts and last part should be at least 2 chars (TLD)
+        if (parts.length >= 2 && parts[parts.length - 1].length >= 2) {
+          return parts.slice(-2).join('.');
+        }
+      }
     }
     return '';
   }

@@ -1,26 +1,41 @@
-import { Box, CircularProgress } from '@mui/material';
+import { useState } from 'react';
+import { Box, CircularProgress, Collapse, IconButton } from '@mui/material';
 import styled from '@emotion/styled';
+import SettingsIcon from '@mui/icons-material/Settings';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useTrackedSites } from './hooks/useTrackedSites';
 import { useDomainManagement } from './hooks/useDomainManagement';
-import AddDomainForm from './components/AddDomainForm';
 import TrackedSitesList from './components/TrackedSitesList';
+import DomainManagementPanel from './components/DomainManagementPanel';
 
 const StyledContainer = styled(Box)`
   padding: 20px;
   font-family: system-ui, -apple-system, sans-serif;
+  background-color: ${({ theme }) => theme.palette.background.default};
+  min-height: 500px;
+`;
+
+const StyledHeader = styled(Box)`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 `;
 
 const StyledTitle = styled(Box)`
-  margin-top: 0;
+  margin: 0;
   font-size: 24px;
-  margin-bottom: 20px;
-  font-weight: 500;
+  font-weight: 600;
+  color: ${({ theme }) => theme.palette.text.primary};
 `;
 
-const StyledSectionTitle = styled(Box)`
-  font-size: 18px;
-  margin-bottom: 15px;
-  font-weight: 500;
+const StyledManagementButton = styled(IconButton)`
+  color: ${({ theme }) => theme.palette.primary.main};
+  padding: 8px;
+  
+  &:hover {
+    background-color: ${({ theme }) => theme.palette.action.hover};
+  }
 `;
 
 const StyledLoadingContainer = styled(Box)`
@@ -28,6 +43,10 @@ const StyledLoadingContainer = styled(Box)`
   justify-content: center;
   align-items: center;
   padding: 40px;
+`;
+
+const StyledCollapseContainer = styled(Box)`
+  margin-bottom: 20px;
 `;
 
 interface TrackedSiteDisplay {
@@ -42,6 +61,7 @@ interface TrackedSiteDisplay {
 export default function App() {
   const { trackedSites, usage, isLoading } = useTrackedSites();
   const { addDomain, removeDomain, error, clearError } = useDomainManagement();
+  const [isManagementPanelOpen, setIsManagementPanelOpen] = useState(false);
 
   const handleRemoveDomain = async (domain: string) => {
     try {
@@ -49,6 +69,10 @@ export default function App() {
     } catch (err) {
       console.error('Error removing domain:', err);
     }
+  };
+
+  const toggleManagementPanel = () => {
+    setIsManagementPanelOpen(!isManagementPanelOpen);
   };
 
   const trackedSitesList: TrackedSiteDisplay[] = Object.keys(trackedSites).map(domain => ({
@@ -69,26 +93,34 @@ export default function App() {
 
   return (
     <StyledContainer>
-      <StyledTitle>
-        Website Time Tracker
-      </StyledTitle>
+      <StyledHeader>
+        <StyledTitle>
+          Website Time Tracker
+        </StyledTitle>
+        <StyledManagementButton
+          onClick={toggleManagementPanel}
+          aria-label={isManagementPanelOpen ? 'Close management panel' : 'Open management panel'}
+        >
+          {isManagementPanelOpen ? <ExpandLessIcon /> : <SettingsIcon />}
+        </StyledManagementButton>
+      </StyledHeader>
       
-      <AddDomainForm
-        onAddDomain={addDomain}
-        error={error?.message || null}
-        onClearError={clearError}
+      <StyledCollapseContainer>
+        <Collapse in={isManagementPanelOpen}>
+          <DomainManagementPanel
+            trackedSites={trackedSitesList}
+            onAddDomain={addDomain}
+            onRemoveDomain={handleRemoveDomain}
+            error={error?.message || null}
+            onClearError={clearError}
+          />
+        </Collapse>
+      </StyledCollapseContainer>
+      
+      <TrackedSitesList
+        sites={trackedSitesList}
+        onOpenManagementPanel={() => setIsManagementPanelOpen(true)}
       />
-      
-      <Box>
-        <StyledSectionTitle>
-          Tracked Sites
-        </StyledSectionTitle>
-        
-        <TrackedSitesList
-          sites={trackedSitesList}
-          onRemoveDomain={handleRemoveDomain}
-        />
-      </Box>
     </StyledContainer>
   );
 }

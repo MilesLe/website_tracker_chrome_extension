@@ -15,7 +15,10 @@ const StyledProgressLabel = styled(Typography, {
   shouldForwardProp: (prop) => prop !== 'isOverLimit',
 })<{ isOverLimit: boolean }>`
   font-size: 12px;
-  color: ${({ isOverLimit }) => (isOverLimit ? '#d32f2f' : '#666')};
+  color: ${({ theme, isOverLimit }) => 
+    isOverLimit 
+      ? theme.palette.error.main 
+      : theme.palette.primary.light};
   font-weight: ${({ isOverLimit }) => (isOverLimit ? 600 : 'normal')};
 `;
 
@@ -24,10 +27,13 @@ const StyledLinearProgress = styled(LinearProgress, {
 })<{ isOverLimit: boolean }>`
   height: 8px;
   border-radius: 4px;
-  background-color: #e0e0e0;
+  background-color: ${({ theme }) => theme.palette.background.default};
   
   .MuiLinearProgress-bar {
-    background-color: ${({ isOverLimit }) => (isOverLimit ? '#d32f2f' : '#4caf50')};
+    background-color: ${({ theme, isOverLimit }) => 
+      isOverLimit 
+        ? theme.palette.error.main 
+        : theme.palette.primary.main};
     transition: width 0.3s ease;
   }
 `;
@@ -42,7 +48,13 @@ export default function ProgressBar({ percentage, isOverLimit, showLabel = true 
     <StyledProgressContainer>
       {showLabel && (
         <Box display="flex" justifyContent="space-between" marginBottom="5px">
-          <Typography variant="caption" color="text.secondary">
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              color: (theme) => theme.palette.text.secondary,
+              fontSize: '12px',
+            }}
+          >
             Progress
           </Typography>
           <StyledProgressLabel isOverLimit={isOverLimit} variant="caption">

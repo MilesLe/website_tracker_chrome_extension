@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { renderWithTheme } from '../../test-utils';
 import AddDomainForm from '../../../src/popup/components/AddDomainForm';
 
 describe('AddDomainForm', () => {
@@ -12,7 +13,7 @@ describe('AddDomainForm', () => {
   });
 
   it('should render form fields', () => {
-    render(
+    renderWithTheme(
       <AddDomainForm
         onAddDomain={mockOnAddDomain}
         error={null}
@@ -29,7 +30,7 @@ describe('AddDomainForm', () => {
     const user = userEvent.setup();
     mockOnAddDomain.mockResolvedValue(true);
 
-    render(
+    renderWithTheme(
       <AddDomainForm
         onAddDomain={mockOnAddDomain}
         error={null}
@@ -54,7 +55,7 @@ describe('AddDomainForm', () => {
     const user = userEvent.setup();
     mockOnAddDomain.mockResolvedValue(true);
 
-    render(
+    renderWithTheme(
       <AddDomainForm
         onAddDomain={mockOnAddDomain}
         error={null}
@@ -77,7 +78,7 @@ describe('AddDomainForm', () => {
   });
 
   it('should display error message when error is provided', () => {
-    render(
+    renderWithTheme(
       <AddDomainForm
         onAddDomain={mockOnAddDomain}
         error="Invalid domain format"
@@ -91,7 +92,7 @@ describe('AddDomainForm', () => {
   it('should call onClearError when error alert is closed', async () => {
     const user = userEvent.setup();
 
-    render(
+    renderWithTheme(
       <AddDomainForm
         onAddDomain={mockOnAddDomain}
         error="Some error"
@@ -108,7 +109,7 @@ describe('AddDomainForm', () => {
   it('should clear error when domain input changes', async () => {
     const user = userEvent.setup();
 
-    render(
+    renderWithTheme(
       <AddDomainForm
         onAddDomain={mockOnAddDomain}
         error="Some error"
@@ -125,7 +126,7 @@ describe('AddDomainForm', () => {
   it('should clear error when limit input changes', async () => {
     const user = userEvent.setup();
 
-    render(
+    renderWithTheme(
       <AddDomainForm
         onAddDomain={mockOnAddDomain}
         error="Some error"
@@ -143,7 +144,7 @@ describe('AddDomainForm', () => {
     const user = userEvent.setup();
     mockOnAddDomain.mockResolvedValue(true);
 
-    render(
+    renderWithTheme(
       <AddDomainForm
         onAddDomain={mockOnAddDomain}
         error={null}
@@ -170,7 +171,7 @@ describe('AddDomainForm', () => {
     });
     mockOnAddDomain.mockReturnValue(promise);
 
-    render(
+    renderWithTheme(
       <AddDomainForm
         onAddDomain={mockOnAddDomain}
         error={null}

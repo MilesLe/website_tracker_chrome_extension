@@ -54,7 +54,10 @@ describe('background service worker', () => {
       trackedSites: { 'youtube.com': 60 },
     }));
     
-    // Simulate tab activation
+    // Import background to trigger initialization
+    await import('../src/background');
+    
+    // Simulate tab activation - the listener should be registered during initialization
     const listeners = chrome().tabs.onActivated.addListener.mock.calls;
     expect(listeners.length).toBeGreaterThan(0);
   });

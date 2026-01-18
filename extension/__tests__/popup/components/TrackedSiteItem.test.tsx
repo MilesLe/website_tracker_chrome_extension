@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { describe, it, expect } from 'vitest';
+import { screen } from '@testing-library/react';
+import { renderWithTheme } from '../../test-utils';
 import TrackedSiteItem from '../../../src/popup/components/TrackedSiteItem';
 
 describe('TrackedSiteItem', () => {
@@ -11,28 +11,14 @@ describe('TrackedSiteItem', () => {
   };
 
   it('should render site information', () => {
-    const onRemove = vi.fn();
-    render(<TrackedSiteItem site={mockSite} onRemove={onRemove} />);
+    renderWithTheme(<TrackedSiteItem site={mockSite} />);
 
     expect(screen.getByText('youtube.com')).toBeInTheDocument();
     expect(screen.getByText('30.0 / 60 minutes')).toBeInTheDocument();
   });
 
-  it('should call onRemove when remove button is clicked', async () => {
-    const user = userEvent.setup();
-    const onRemove = vi.fn();
-    render(<TrackedSiteItem site={mockSite} onRemove={onRemove} />);
-
-    const removeButton = screen.getByRole('button', { name: /remove/i });
-    await user.click(removeButton);
-
-    expect(onRemove).toHaveBeenCalledWith('youtube.com');
-    expect(onRemove).toHaveBeenCalledTimes(1);
-  });
-
   it('should display progress bar', () => {
-    const onRemove = vi.fn();
-    render(<TrackedSiteItem site={mockSite} onRemove={onRemove} />);
+    renderWithTheme(<TrackedSiteItem site={mockSite} />);
 
     const progressBar = screen.getByRole('progressbar');
     expect(progressBar).toBeInTheDocument();
@@ -45,8 +31,7 @@ describe('TrackedSiteItem', () => {
       limit: 60,
       usage: 70,
     };
-    const onRemove = vi.fn();
-    const { container } = render(<TrackedSiteItem site={overLimitSite} onRemove={onRemove} />);
+    const { container } = renderWithTheme(<TrackedSiteItem site={overLimitSite} />);
 
     const card = container.querySelector('.MuiCard-root');
     expect(card).toBeInTheDocument();
@@ -58,8 +43,7 @@ describe('TrackedSiteItem', () => {
       limit: 60,
       usage: 30.555,
     };
-    const onRemove = vi.fn();
-    render(<TrackedSiteItem site={siteWithDecimal} onRemove={onRemove} />);
+    renderWithTheme(<TrackedSiteItem site={siteWithDecimal} />);
 
     expect(screen.getByText('30.6 / 60 minutes')).toBeInTheDocument();
   });
