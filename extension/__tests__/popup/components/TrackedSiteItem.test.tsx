@@ -57,7 +57,7 @@ describe('TrackedSiteItem', () => {
     expect(clickableCell).toBeInTheDocument();
 
     // Initially, expanded content should not be visible (Collapse keeps it in DOM but hidden)
-    const timeText = screen.queryByText(/30.0 \/ 60 minutes/);
+    const timeText = screen.queryByText(/30m \/ 1h/);
     if (timeText) {
       expect(timeText).not.toBeVisible();
     }
@@ -66,7 +66,7 @@ describe('TrackedSiteItem', () => {
     await user.hover(clickableCell);
     
     await waitFor(() => {
-      const expandedTimeText = screen.getByText(/30.0 \/ 60 minutes/);
+      const expandedTimeText = screen.getByText(/30m \/ 1h/);
       expect(expandedTimeText).toBeVisible();
       const percentageText = screen.getByText(/50.0%/);
       expect(percentageText).toBeVisible();
@@ -80,7 +80,7 @@ describe('TrackedSiteItem', () => {
     expect(clickableCell).toBeInTheDocument();
 
     // Initially, expanded content should not be visible (Collapse keeps it in DOM but hidden)
-    const timeText = screen.queryByText(/30.0 \/ 60 minutes/);
+    const timeText = screen.queryByText(/30m \/ 1h/);
     if (timeText) {
       expect(timeText).not.toBeVisible();
     }
@@ -89,7 +89,7 @@ describe('TrackedSiteItem', () => {
     fireEvent.click(clickableCell);
     
     await waitFor(() => {
-      const expandedTimeText = screen.getByText(/30.0 \/ 60 minutes/);
+      const expandedTimeText = screen.getByText(/30m \/ 1h/);
       expect(expandedTimeText).toBeVisible();
       const percentageText = screen.getByText(/50.0%/);
       expect(percentageText).toBeVisible();
@@ -105,14 +105,14 @@ describe('TrackedSiteItem', () => {
     // Click to expand
     fireEvent.click(clickableCell);
     await waitFor(() => {
-      const expandedTimeText = screen.getByText(/30.0 \/ 60 minutes/);
+      const expandedTimeText = screen.getByText(/30m \/ 1h/);
       expect(expandedTimeText).toBeVisible();
     }, { timeout: 1000 });
 
     // Click again to collapse
     fireEvent.click(clickableCell);
     await waitFor(() => {
-      const timeText = screen.queryByText(/30.0 \/ 60 minutes/);
+      const timeText = screen.queryByText(/30m \/ 1h/);
       if (timeText) {
         expect(timeText).not.toBeVisible();
       } else {
@@ -137,20 +137,20 @@ describe('TrackedSiteItem', () => {
     }, { timeout: 1000 });
   });
 
-  it('should format usage to one decimal place', async () => {
+  it('should format time in hours/minutes format', async () => {
     const user = userEvent.setup();
-    const siteWithDecimal = {
+    const siteWithHours = {
       domain: 'youtube.com',
-      limit: 60,
-      usage: 30.555,
+      limit: 120, // 2 hours
+      usage: 90, // 1h 30m
     };
-    renderWithTheme(<TrackedSiteItem site={siteWithDecimal} />);
+    renderWithTheme(<TrackedSiteItem site={siteWithHours} />);
 
     const clickableCell = screen.getByTestId('tracked-site-youtube.com');
     await user.hover(clickableCell);
     
     await waitFor(() => {
-      const timeText = screen.getByText(/30.6 \/ 60 minutes/);
+      const timeText = screen.getByText(/1h 30m \/ 2h/);
       expect(timeText).toBeVisible();
     }, { timeout: 1000 });
   });

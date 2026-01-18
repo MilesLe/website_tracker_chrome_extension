@@ -1,6 +1,7 @@
 import { Box, Typography, IconButton, List, ListItem } from '@mui/material';
 import styled from '@emotion/styled';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { formatTimeRange } from '../utils/timeFormat';
 
 interface TrackedSiteDisplay {
   domain: string;
@@ -98,7 +99,7 @@ export default function DomainRemoveList({ sites, onRemoveDomain }: DomainRemove
             <StyledDomainInfo>
               <StyledDomainName>{site.domain}</StyledDomainName>
               <StyledDomainDetails>
-                {site.usage.toFixed(1)} / {site.limit} minutes
+                {formatTimeRange(site.usage, site.limit)}
               </StyledDomainDetails>
             </StyledDomainInfo>
             <StyledRemoveButton

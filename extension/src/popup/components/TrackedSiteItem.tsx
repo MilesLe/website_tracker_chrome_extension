@@ -3,6 +3,7 @@ import { Box, Typography, Collapse } from '@mui/material';
 import styled from '@emotion/styled';
 import ProgressBar from './ProgressBar';
 import { getFaviconUrl, getDomainInitial } from '../utils/favicon';
+import { formatTimeRange } from '../utils/timeFormat';
 
 interface TrackedSiteDisplay {
   domain: string;
@@ -215,7 +216,7 @@ export default function TrackedSiteItem({ site }: TrackedSiteItemProps) {
       >
         <StyledExpandedContent>
           <StyledTimeText>
-            {site.usage.toFixed(1)} / {site.limit} minutes
+            {formatTimeRange(site.usage, site.limit)}
           </StyledTimeText>
           <StyledPercentageText isOverLimit={isOverLimit}>
             {percentage.toFixed(1)}%

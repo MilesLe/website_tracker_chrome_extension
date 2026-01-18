@@ -14,16 +14,14 @@ export function validateDomain(domain: string): boolean {
   return simpleDomainRegex.test(cleanDomain) || domainRegex.test(cleanDomain);
 }
 
+import { parseTimeString } from './timeFormat';
+
 /**
- * Validates a limit value
- * @param limit - Limit value to validate
- * @returns true if limit is a valid positive integer, false otherwise
+ * Validates a time limit value (accepts hours/minutes format or plain minutes)
+ * @param limit - Time limit value to validate (e.g., "2h 30m", "2h", "30m", or "150")
+ * @returns true if limit is valid and converts to positive minutes, false otherwise
  */
 export function validateLimit(limit: string): boolean {
-  // Check if string contains decimal point
-  if (limit.includes('.')) {
-    return false;
-  }
-  const num = parseInt(limit, 10);
-  return !isNaN(num) && num > 0 && num.toString() === limit.trim();
+  const minutes = parseTimeString(limit);
+  return minutes !== null && minutes > 0;
 }

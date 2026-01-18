@@ -20,8 +20,31 @@ vi.mock('../../../src/popup/utils/validation', () => ({
     return domain.includes('.com') || domain.includes('.org');
   }),
   validateLimit: vi.fn((limit: string) => {
-    const num = parseInt(limit, 10);
-    return !isNaN(num) && num > 0;
+    // Mock validation to accept hours/minutes format
+    if (/^\d+$/.test(limit)) {
+      const num = parseInt(limit, 10);
+      return !isNaN(num) && num > 0;
+    }
+    // Accept hours/minutes format
+    return /^\d+h\s*\d*m?$|^\d+h$|^\d+m$/.test(limit.toLowerCase());
+  }),
+}));
+
+vi.mock('../../../src/popup/utils/timeFormat', () => ({
+  parseTimeString: vi.fn((timeString: string) => {
+    // Mock parser to convert hours/minutes to minutes
+    const trimmed = timeString.trim().toLowerCase();
+    if (/^\d+$/.test(trimmed)) {
+      const minutes = parseInt(trimmed, 10);
+      return minutes > 0 ? minutes : null;
+    }
+    const hourMatch = trimmed.match(/(\d+)\s*h/);
+    const minuteMatch = trimmed.match(/(\d+)\s*m/);
+    const hours = hourMatch ? parseInt(hourMatch[1], 10) : 0;
+    const minutes = minuteMatch ? parseInt(minuteMatch[1], 10) : 0;
+    if (hours === 0 && minutes === 0) return null;
+    if (minutes < 0 || minutes >= 60) return null;
+    return hours * 60 + minutes;
   }),
 }));
 
@@ -43,13 +66,13 @@ describe('useDomainManagement', () => {
 
       let success = false;
       await act(async () => {
-        success = await result.current.addDomain('youtube.com', '60');
+        success = await result.current.addDomain('youtube.com', '2h 30m');
       });
 
       expect(success).toBe(true);
       expect(result.current.error).toBeNull();
       expect(chrome().storage.local.set).toHaveBeenCalledWith({
-        trackedSites: { 'youtube.com': 60 },
+        trackedSites: { 'youtube.com': 150 }, // 2h 30m = 150 minutes
       });
     });
 
@@ -92,7 +115,7 @@ describe('useDomainManagement', () => {
       });
 
       expect(success).toBe(false);
-      expect(result.current.error?.message).toBe('Please enter a valid positive number for the limit');
+      expect(result.current.error?.message).toContain('valid time limit');
     });
 
     it('should return error for duplicate domain', async () => {
@@ -127,7 +150,7 @@ describe('useDomainManagement', () => {
 
       let success = false;
       await act(async () => {
-        success = await result.current.addDomain('youtube.com', '60');
+        success = await result.current.addDomain('youtube.com', '2h 30m');
       });
 
       expect(success).toBe(false);

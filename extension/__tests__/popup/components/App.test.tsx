@@ -39,6 +39,12 @@ describe('App', () => {
     // Use getAllByText to verify it exists, or check for the visible one
     const youtubeElements = screen.getAllByText('youtube.com');
     expect(youtubeElements.length).toBeGreaterThan(0);
+    
+    // Check that metrics tile is displayed
+    expect(screen.getByTestId('metrics-tile')).toBeInTheDocument();
+    expect(screen.getByText('Total Time Today')).toBeInTheDocument();
+    expect(screen.getByText('Total Time Allowed')).toBeInTheDocument();
+    expect(screen.getByText('Time Used')).toBeInTheDocument();
   });
 
   it('should show loading state', () => {
@@ -81,6 +87,41 @@ describe('App', () => {
     renderWithTheme(<App />);
 
     expect(screen.getByText(/No domains tracked yet/i)).toBeInTheDocument();
+    // Metrics tile should still be displayed even with no sites
+    expect(screen.getByTestId('metrics-tile')).toBeInTheDocument();
+  });
+  
+  it('should display correct metrics for multiple tracked sites', () => {
+    mockUseTrackedSites.mockReturnValue({
+      trackedSites: { 
+        'youtube.com': 60,
+        'facebook.com': 30,
+        'twitter.com': 45,
+      },
+      usage: { 
+        'youtube.com': 30,
+        'facebook.com': 15,
+        'twitter.com': 20,
+      },
+      isLoading: false,
+      reload: vi.fn(),
+    });
+
+    mockUseDomainManagement.mockReturnValue({
+      addDomain: vi.fn().mockResolvedValue(true),
+      removeDomain: vi.fn().mockResolvedValue(undefined),
+      error: null,
+      clearError: vi.fn(),
+    });
+
+    renderWithTheme(<App />);
+
+    // Total: 30 + 15 + 20 = 65 minutes = 1h 5m
+    expect(screen.getByText('1h 5m')).toBeInTheDocument();
+    // Total allowed: 60 + 30 + 45 = 135 minutes = 2h 15m
+    expect(screen.getByText('2h 15m')).toBeInTheDocument();
+    // Total percentage: 65 / 135 * 100 = 48.1%
+    expect(screen.getByText('48.1%')).toBeInTheDocument();
   });
 
   it('should handle remove domain', async () => {

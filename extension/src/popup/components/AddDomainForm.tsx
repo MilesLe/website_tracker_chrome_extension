@@ -97,16 +97,15 @@ export default function AddDomainForm({ onAddDomain, error, onClearError }: AddD
         />
         
         <TextField
-          label="Daily Limit (minutes)"
-          placeholder="60"
-          type="number"
+          label="Daily Limit (e.g., 2h 30m or 150m)"
+          placeholder="2h 30m"
           value={limitInput}
           onChange={(e) => handleLimitChange(e.target.value)}
           onKeyPress={(e) => handleKeyPress(e, () => handleSubmit(e as any))}
-          inputProps={{ min: 1 }}
           fullWidth
           size="small"
           disabled={isSubmitting}
+          helperText="Format: 2h 30m, 2h, 30m, or 150 (minutes)"
         />
         
         {error && (

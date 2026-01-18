@@ -23,6 +23,7 @@ describe('AddDomainForm', () => {
 
     expect(screen.getByLabelText(/domain/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/daily limit/i)).toBeInTheDocument();
+    expect(screen.getByText(/format: 2h 30m/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /add domain/i })).toBeInTheDocument();
   });
 
@@ -43,11 +44,11 @@ describe('AddDomainForm', () => {
     const submitButton = screen.getByRole('button', { name: /add domain/i });
 
     await user.type(domainInput, 'youtube.com');
-    await user.type(limitInput, '60');
+    await user.type(limitInput, '2h 30m');
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockOnAddDomain).toHaveBeenCalledWith('youtube.com', '60');
+      expect(mockOnAddDomain).toHaveBeenCalledWith('youtube.com', '2h 30m');
     });
   });
 
@@ -68,7 +69,7 @@ describe('AddDomainForm', () => {
     const submitButton = screen.getByRole('button', { name: /add domain/i });
 
     await user.type(domainInput, 'youtube.com');
-    await user.type(limitInput, '60');
+    await user.type(limitInput, '2h 30m');
     await user.click(submitButton);
 
     await waitFor(() => {
@@ -156,7 +157,7 @@ describe('AddDomainForm', () => {
     const limitInput = screen.getByLabelText(/daily limit/i);
 
     await user.type(domainInput, 'youtube.com');
-    await user.type(limitInput, '60{Enter}');
+    await user.type(limitInput, '2h 30m{Enter}');
 
     await waitFor(() => {
       expect(mockOnAddDomain).toHaveBeenCalled();
@@ -184,7 +185,7 @@ describe('AddDomainForm', () => {
     const submitButton = screen.getByRole('button', { name: /add domain/i });
 
     await user.type(domainInput, 'youtube.com');
-    await user.type(limitInput, '60');
+    await user.type(limitInput, '2h 30m');
     await user.click(submitButton);
 
     expect(submitButton).toBeDisabled();

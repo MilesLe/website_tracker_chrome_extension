@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { getStorageData, extractDomain } from '../../utils';
 import { validateDomain, validateLimit } from '../utils/validation';
+import { parseTimeString } from '../utils/timeFormat';
 
 export interface DomainManagementError {
   message: string;
@@ -36,11 +37,16 @@ export function useDomainManagement() {
     }
     
     if (!validateLimit(limitInput)) {
-      setError({ message: 'Please enter a valid positive number for the limit' });
+      setError({ message: 'Please enter a valid time limit (e.g., 2h 30m, 2h, 30m, or 150)' });
       return false;
     }
     
-    const limit = parseInt(limitInput, 10);
+    // Convert hours/minutes format to minutes
+    const limit = parseTimeString(limitInput);
+    if (limit === null) {
+      setError({ message: 'Please enter a valid time limit (e.g., 2h 30m, 2h, 30m, or 150)' });
+      return false;
+    }
     
     try {
       // Check if domain already exists

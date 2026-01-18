@@ -7,6 +7,7 @@ import { useTrackedSites } from './hooks/useTrackedSites';
 import { useDomainManagement } from './hooks/useDomainManagement';
 import TrackedSitesList from './components/TrackedSitesList';
 import DomainManagementPanel from './components/DomainManagementPanel';
+import MetricsTile from './components/MetricsTile';
 
 const StyledContainer = styled(Box)`
   padding: 20px;
@@ -116,6 +117,11 @@ export default function App() {
           />
         </Collapse>
       </StyledCollapseContainer>
+      
+      <MetricsTile
+        trackedSites={trackedSites}
+        usage={usage}
+      />
       
       <TrackedSitesList
         sites={trackedSitesList}
