@@ -174,7 +174,7 @@ describe('useCalendar', () => {
     expect(result.current.calendarData).toBe(null);
   });
 
-  it('should not fetch if user ID is not available', () => {
+  it('should not fetch if user ID is still loading', () => {
     mockUseUserId.mockReturnValue({
       userId: null,
       isLoading: true,
@@ -184,6 +184,21 @@ describe('useCalendar', () => {
 
     expect(mockGetCalendarMonth).not.toHaveBeenCalled();
     expect(result.current.isLoading).toBe(true);
+    expect(result.current.error).toBe(null);
+  });
+
+  it('should set error and stop loading if user ID fails to load', () => {
+    mockUseUserId.mockReturnValue({
+      userId: null,
+      isLoading: false,
+    });
+
+    const { result } = renderHook(() => useCalendar(2024, 1));
+
+    expect(mockGetCalendarMonth).not.toHaveBeenCalled();
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).not.toBe(null);
+    expect(result.current.error?.message).toBe('Failed to load user ID');
   });
 
   it('should refetch when month changes', async () => {
@@ -214,5 +229,68 @@ describe('useCalendar', () => {
     });
 
     expect(mockGetCalendarMonth).toHaveBeenCalledTimes(2);
+  });
+
+  it('should ignore stale requests when navigating quickly between months', async () => {
+    const testUserId = 'test-user-id';
+    const mockData1 = { year: 2024, month: 1, days: [{ date: '2024-01-15', totalUsage: 10, domainUsage: {}, limitReached: false, domains: [] }] };
+    const mockData2 = { year: 2024, month: 2, days: [{ date: '2024-02-15', totalUsage: 20, domainUsage: {}, limitReached: false, domains: [] }] };
+
+    mockUseUserId.mockReturnValue({
+      userId: testUserId,
+      isLoading: false,
+    });
+
+    // Create promises that we can control
+    let resolveRequest1: (value: typeof mockData1) => void;
+    let resolveRequest2: (value: typeof mockData2) => void;
+    
+    const promise1 = new Promise<typeof mockData1>((resolve) => {
+      resolveRequest1 = resolve;
+    });
+    const promise2 = new Promise<typeof mockData2>((resolve) => {
+      resolveRequest2 = resolve;
+    });
+
+    mockGetCalendarMonth.mockReturnValueOnce(promise1);
+    mockGetCalendarMonth.mockReturnValueOnce(promise2);
+
+    const { result, rerender } = renderHook(
+      ({ year, month }) => useCalendar(year, month),
+      { initialProps: { year: 2024, month: 1 } }
+    );
+
+    // Start request for month 1
+    await waitFor(() => {
+      expect(mockGetCalendarMonth).toHaveBeenCalledWith(2024, 1);
+    });
+
+    // Quickly change to month 2 before month 1 completes
+    rerender({ year: 2024, month: 2 });
+
+    await waitFor(() => {
+      expect(mockGetCalendarMonth).toHaveBeenCalledWith(2024, 2);
+    });
+
+    // Resolve month 2 request first (newer request completes quickly)
+    resolveRequest2!(mockData2);
+    await promise2;
+
+    // Wait for month 2 data to be set
+    await waitFor(() => {
+      expect(result.current.calendarData).toEqual(mockData2);
+    });
+
+    // Now resolve month 1 request AFTER month 2 (stale request completes late)
+    // This simulates the race condition where an older request completes after a newer one
+    resolveRequest1!(mockData1);
+    await promise1;
+
+    // Wait a bit to ensure state updates have processed
+    await new Promise(resolve => setTimeout(resolve, 10));
+
+    // Verify that month 2 data is still displayed (not overwritten by stale month 1 data)
+    expect(result.current.calendarData).toEqual(mockData2);
+    expect(result.current.calendarData?.month).toBe(2);
   });
 });
