@@ -261,6 +261,60 @@ describe('CalendarView', () => {
     });
   });
 
+  it('should not allow clicking past days with zero usage', async () => {
+    const mockCalendarData: CalendarMonthResponse = {
+      year: 2024,
+      month: 1,
+      days: [
+        {
+          date: '2024-01-15',
+          totalUsage: 60,
+          domainUsage: { 'youtube.com': 60 },
+          limitReached: false,
+          domains: [],
+        },
+        {
+          date: '2024-01-10',
+          totalUsage: 0,
+          domainUsage: {},
+          limitReached: false,
+          domains: [],
+        },
+      ],
+    };
+
+    renderWithTheme(
+      <CalendarView
+        calendarData={mockCalendarData}
+        isLoading={false}
+        error={null}
+        onMonthChange={mockOnMonthChange}
+      />
+    );
+
+    // Wait for auto-selection of today
+    await waitFor(() => {
+      expect(screen.getByText('2024-01-15')).toBeInTheDocument();
+    });
+
+    // Try to click day 10 (which has totalUsage: 0, so should be treated as no data)
+    const day10Cells = screen.getAllByText('10');
+    const day10Cell = day10Cells.find(cell => {
+      const parent = cell.parentElement;
+      return parent && parent.getAttribute('role') !== 'button';
+    }) || day10Cells[0];
+    
+    // Click should not change selection (day 10 has zero usage, treated as no data)
+    fireEvent.click(day10Cell);
+
+    // Should still show details for day 15 (today)
+    await waitFor(() => {
+      expect(screen.getByText('2024-01-15')).toBeInTheDocument();
+      // Day 10 details should NOT be shown (it has zero usage)
+      expect(screen.queryByText('2024-01-10')).not.toBeInTheDocument();
+    });
+  });
+
   it('should show day details when a day is selected', async () => {
     const mockCalendarData: CalendarMonthResponse = {
       year: 2024,
@@ -431,6 +485,50 @@ describe('CalendarView', () => {
     // The actual styling (grey) and clickability are tested in DayCell component tests
     day10Cells.forEach(cell => {
       expect(cell).toBeInTheDocument();
+    });
+  });
+
+  it('should not allow clicking future days without data', async () => {
+    const mockCalendarData: CalendarMonthResponse = {
+      year: 2024,
+      month: 1,
+      days: [
+        {
+          date: '2024-01-15',
+          totalUsage: 60,
+          domainUsage: { 'youtube.com': 60 },
+          limitReached: false,
+          domains: [],
+        },
+      ],
+    };
+
+    renderWithTheme(
+      <CalendarView
+        calendarData={mockCalendarData}
+        isLoading={false}
+        error={null}
+        onMonthChange={mockOnMonthChange}
+      />
+    );
+
+    // Wait for auto-selection of today
+    await waitFor(() => {
+      expect(screen.getByText('2024-01-15')).toBeInTheDocument();
+    });
+
+    // Try to click day 25 (which is in the future and has no data)
+    const day25Cells = screen.getAllByText('25');
+    const day25Cell = day25Cells[0];
+    
+    // Click should not change selection (day 25 is in the future and has no data)
+    fireEvent.click(day25Cell);
+
+    // Should still show details for day 15 (today)
+    await waitFor(() => {
+      expect(screen.getByText('2024-01-15')).toBeInTheDocument();
+      // Day 25 details should NOT be shown
+      expect(screen.queryByText('2024-01-25')).not.toBeInTheDocument();
     });
   });
 });

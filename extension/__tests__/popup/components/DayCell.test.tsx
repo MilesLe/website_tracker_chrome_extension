@@ -183,6 +183,66 @@ describe('DayCell', () => {
     // Cell should be rendered (grey color is applied via styled component)
   });
 
+  it('should show grey color for days with zero usage', () => {
+    const dayWithZeroUsage: CalendarDay = {
+      date: '2024-01-10',
+      totalUsage: 0,
+      domainUsage: {},
+      limitReached: false,
+      domains: [],
+    };
+
+    const { container } = renderWithTheme(
+      <DayCell
+        day={dayWithZeroUsage}
+        dayNumber={10}
+        isCurrentMonth={true}
+        isToday={false}
+        hasData={false}
+        isFuture={false}
+        onClick={vi.fn()}
+        isSelected={false}
+      />
+    );
+
+    const cell = container.firstChild as HTMLElement;
+    expect(cell).toBeInTheDocument();
+    // Days with zero usage should be treated as having no data and show grey
+    const styles = window.getComputedStyle(cell);
+    // Should have grey background (disabled background color)
+    expect(styles.backgroundColor).not.toBe('rgb(76, 175, 80)'); // Should not be green
+  });
+
+  it('should not be clickable when it has zero usage', () => {
+    const dayWithZeroUsage: CalendarDay = {
+      date: '2024-01-10',
+      totalUsage: 0,
+      domainUsage: {},
+      limitReached: false,
+      domains: [],
+    };
+
+    const handleClick = vi.fn();
+    const { container } = renderWithTheme(
+      <DayCell
+        day={dayWithZeroUsage}
+        dayNumber={10}
+        isCurrentMonth={true}
+        isToday={false}
+        hasData={false}
+        isFuture={false}
+        onClick={handleClick}
+        isSelected={false}
+      />
+    );
+
+    const cell = container.firstChild as HTMLElement;
+    expect(cell).toBeInTheDocument();
+    fireEvent.click(cell);
+    // Days with zero usage should not be clickable (treated as no data)
+    expect(handleClick).not.toHaveBeenCalled();
+  });
+
   it('should show grey color for future days', () => {
     const { container } = renderWithTheme(
       <DayCell
@@ -223,26 +283,6 @@ describe('DayCell', () => {
     expect(styles.backgroundColor).toBe('rgb(66, 165, 245)'); // #42a5f5 in rgb
   });
 
-  it('should show selected state with blue background even for days without data', () => {
-    const { container } = renderWithTheme(
-      <DayCell
-        day={null}
-        dayNumber={15}
-        isCurrentMonth={true}
-        isToday={true}
-        hasData={false}
-        isFuture={false}
-        onClick={vi.fn()}
-        isSelected={true}
-      />
-    );
-
-    const cell = container.firstChild as HTMLElement;
-    expect(cell).toBeInTheDocument();
-    // Selected state should have blue background even without data
-    const styles = window.getComputedStyle(cell);
-    expect(styles.backgroundColor).toBe('rgb(66, 165, 245)'); // #42a5f5 in rgb
-  });
 
   it('should show today indicator', () => {
     const { container } = renderWithTheme(
