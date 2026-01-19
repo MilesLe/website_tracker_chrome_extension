@@ -47,6 +47,12 @@ Thumbs.db
 .env
 .env.local
 
+# Database
+*.db
+*.sqlite
+*.sqlite3
+website_tracker.db
+
 # Testing
 coverage/
 .nyc_output/
