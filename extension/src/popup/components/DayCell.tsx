@@ -7,6 +7,8 @@ interface DayCellProps {
   dayNumber: number;
   isCurrentMonth: boolean;
   isToday: boolean;
+  hasData: boolean;
+  isFuture: boolean;
   onClick: () => void;
   isSelected: boolean;
 }
@@ -16,6 +18,8 @@ const StyledDayCell = styled(Box)<{
   isToday: boolean;
   limitReached: boolean;
   isSelected: boolean;
+  hasData: boolean;
+  isFuture: boolean;
 }>`
   width: 100%;
   aspect-ratio: 1;
@@ -23,13 +27,22 @@ const StyledDayCell = styled(Box)<{
   align-items: center;
   justify-content: center;
   border-radius: 4px;
-  cursor: ${({ isCurrentMonth }) => (isCurrentMonth ? 'pointer' : 'default')};
-  background-color: ${({ theme, limitReached, isCurrentMonth, isToday, isSelected }) => {
+  cursor: ${({ isCurrentMonth, hasData }) => (isCurrentMonth && hasData ? 'pointer' : 'default')};
+  background-color: ${({ theme, limitReached, isCurrentMonth, isToday, isSelected, hasData, isFuture }) => {
     if (!isCurrentMonth) {
       return 'transparent';
     }
+    // Selected state takes precedence (even for days without data)
     if (isSelected) {
+      // If selected but no data, show a lighter selected color
+      if (!hasData || isFuture) {
+        return theme.palette.action.selected;
+      }
       return theme.palette.action.selected;
+    }
+    // Grey for days without data (past days before tracking started, or future days)
+    if (!hasData || isFuture) {
+      return theme.palette.action.disabledBackground || theme.palette.grey[300];
     }
     if (limitReached) {
       return theme.palette.error.main;
@@ -39,15 +52,27 @@ const StyledDayCell = styled(Box)<{
     }
     return theme.palette.success.main;
   }};
-  color: ${({ theme, isCurrentMonth }) => 
-    isCurrentMonth ? theme.palette.text.primary : theme.palette.text.disabled};
+  color: ${({ theme, isCurrentMonth, hasData, isFuture }) => {
+    if (!isCurrentMonth) {
+      return theme.palette.text.disabled;
+    }
+    // Grey text for days without data
+    if (!hasData || isFuture) {
+      return theme.palette.text.disabled;
+    }
+    return theme.palette.text.primary;
+  }};
   transition: background-color 0.2s, transform 0.1s;
   
   &:hover {
-    transform: ${({ isCurrentMonth }) => (isCurrentMonth ? 'scale(1.1)' : 'none')};
-    background-color: ${({ theme, limitReached, isCurrentMonth, isToday }) => {
+    transform: ${({ isCurrentMonth, hasData }) => (isCurrentMonth && hasData ? 'scale(1.1)' : 'none')};
+    background-color: ${({ theme, limitReached, isCurrentMonth, isToday, hasData, isFuture }) => {
       if (!isCurrentMonth) {
         return 'transparent';
+      }
+      // No hover effect for days without data
+      if (!hasData || isFuture) {
+        return theme.palette.action.disabledBackground || theme.palette.grey[300];
       }
       if (limitReached) {
         return theme.palette.error.dark;
@@ -74,6 +99,8 @@ export default function DayCell({
   dayNumber,
   isCurrentMonth,
   isToday,
+  hasData,
+  isFuture,
   onClick,
   isSelected,
 }: DayCellProps) {
@@ -85,7 +112,9 @@ export default function DayCell({
       isToday={isToday}
       limitReached={limitReached}
       isSelected={isSelected}
-      onClick={isCurrentMonth ? onClick : undefined}
+      hasData={hasData}
+      isFuture={isFuture}
+      onClick={isCurrentMonth && hasData ? onClick : undefined}
     >
       <StyledDayNumber>{dayNumber}</StyledDayNumber>
     </StyledDayCell>

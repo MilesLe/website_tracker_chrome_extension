@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Box, IconButton, Typography, CircularProgress } from '@mui/material';
 import styled from '@emotion/styled';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -108,6 +108,24 @@ export default function CalendarView({
     return { year: now.getFullYear(), month: now.getMonth() + 1 };
   }, [calendarData]);
 
+  // Auto-select today when viewing the current month
+  useEffect(() => {
+    if (calendarData) {
+      const todayDate = new Date(today);
+      const isCurrentMonth = 
+        todayDate.getFullYear() === year && 
+        todayDate.getMonth() === month - 1;
+      
+      if (isCurrentMonth) {
+        // Auto-select today when viewing the current month (even if it doesn't have data yet)
+        setSelectedDate(today);
+      } else {
+        // Clear selection when navigating away from current month
+        setSelectedDate(null);
+      }
+    }
+  }, [calendarData, year, month, today]);
+
   const calendarDays = useMemo(() => {
     if (!calendarData) {
       return [];
@@ -168,14 +186,14 @@ export default function CalendarView({
     const newMonth = month === 1 ? 12 : month - 1;
     const newYear = month === 1 ? year - 1 : year;
     onMonthChange(newYear, newMonth);
-    setSelectedDate(null);
+    // Selection will be updated by useEffect based on whether it's current month
   };
 
   const handleNextMonth = () => {
     const newMonth = month === 12 ? 1 : month + 1;
     const newYear = month === 12 ? year + 1 : year;
     onMonthChange(newYear, newMonth);
-    setSelectedDate(null);
+    // Selection will be updated by useEffect based on whether it's current month
   };
 
   const handleDayClick = (day: CalendarMonthResponse['days'][0] | null, _dayNumber: number, isCurrentMonth: boolean) => {
@@ -233,6 +251,8 @@ export default function CalendarView({
             ? `${year}-${String(month).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`
             : '';
           const isToday = dateStr === today;
+          const hasData = day !== null;
+          const isFuture = dateStr ? new Date(dateStr) > new Date(today) : false;
 
           return (
             <DayCell
@@ -241,6 +261,8 @@ export default function CalendarView({
               dayNumber={dayNumber}
               isCurrentMonth={isCurrentMonth}
               isToday={isToday}
+              hasData={hasData}
+              isFuture={isFuture}
               onClick={() => handleDayClick(day, dayNumber, isCurrentMonth)}
               isSelected={selectedDate === (day?.date || dateStr)}
             />
