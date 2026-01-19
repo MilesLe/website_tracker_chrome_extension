@@ -7,6 +7,9 @@ from pydantic import BaseModel
 from datetime import datetime
 import logging
 
+from .infrastructure.database.connection import init_db
+from .application.routers import usage, tracked_sites
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -24,6 +27,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Note: Database initialization is now manual via migrate.sh script
+# This prevents automatic recreation of tables on every startup
+
+# Include routers
+app.include_router(usage.router)
+app.include_router(tracked_sites.router)
 
 
 class LimitReachedPayload(BaseModel):

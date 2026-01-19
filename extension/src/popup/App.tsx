@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { Box, CircularProgress, Collapse, IconButton } from '@mui/material';
 import styled from '@emotion/styled';
 import SettingsIcon from '@mui/icons-material/Settings';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useTrackedSites } from './hooks/useTrackedSites';
 import { useDomainManagement } from './hooks/useDomainManagement';
 import TrackedSitesList from './components/TrackedSitesList';
 import DomainManagementPanel from './components/DomainManagementPanel';
+import CalendarPanel from './components/CalendarPanel';
 import MetricsTile from './components/MetricsTile';
 
 const StyledContainer = styled(Box)`
@@ -28,6 +30,12 @@ const StyledTitle = styled(Box)`
   font-size: 24px;
   font-weight: 600;
   color: ${({ theme }) => theme.palette.text.primary};
+`;
+
+const StyledIconButtons = styled(Box)`
+  display: flex;
+  gap: 4px;
+  align-items: center;
 `;
 
 const StyledManagementButton = styled(IconButton)`
@@ -63,6 +71,7 @@ export default function App() {
   const { trackedSites, usage, isLoading } = useTrackedSites();
   const { addDomain, removeDomain, error, clearError } = useDomainManagement();
   const [isManagementPanelOpen, setIsManagementPanelOpen] = useState(false);
+  const [isCalendarPanelOpen, setIsCalendarPanelOpen] = useState(false);
 
   const handleRemoveDomain = async (domain: string) => {
     try {
@@ -74,6 +83,18 @@ export default function App() {
 
   const toggleManagementPanel = () => {
     setIsManagementPanelOpen(!isManagementPanelOpen);
+    // Close calendar if opening management panel
+    if (!isManagementPanelOpen) {
+      setIsCalendarPanelOpen(false);
+    }
+  };
+
+  const toggleCalendarPanel = () => {
+    setIsCalendarPanelOpen(!isCalendarPanelOpen);
+    // Close management panel if opening calendar
+    if (!isCalendarPanelOpen) {
+      setIsManagementPanelOpen(false);
+    }
   };
 
   const trackedSitesList: TrackedSiteDisplay[] = Object.keys(trackedSites).map(domain => ({
@@ -98,13 +119,27 @@ export default function App() {
         <StyledTitle>
           Website Time Tracker
         </StyledTitle>
-        <StyledManagementButton
-          onClick={toggleManagementPanel}
-          aria-label={isManagementPanelOpen ? 'Close management panel' : 'Open management panel'}
-        >
-          {isManagementPanelOpen ? <ExpandLessIcon /> : <SettingsIcon />}
-        </StyledManagementButton>
+        <StyledIconButtons>
+          <StyledManagementButton
+            onClick={toggleCalendarPanel}
+            aria-label={isCalendarPanelOpen ? 'Close calendar panel' : 'Open calendar panel'}
+          >
+            {isCalendarPanelOpen ? <ExpandLessIcon /> : <CalendarTodayIcon />}
+          </StyledManagementButton>
+          <StyledManagementButton
+            onClick={toggleManagementPanel}
+            aria-label={isManagementPanelOpen ? 'Close management panel' : 'Open management panel'}
+          >
+            {isManagementPanelOpen ? <ExpandLessIcon /> : <SettingsIcon />}
+          </StyledManagementButton>
+        </StyledIconButtons>
       </StyledHeader>
+      
+      <StyledCollapseContainer>
+        <Collapse in={isCalendarPanelOpen}>
+          <CalendarPanel />
+        </Collapse>
+      </StyledCollapseContainer>
       
       <StyledCollapseContainer>
         <Collapse in={isManagementPanelOpen}>

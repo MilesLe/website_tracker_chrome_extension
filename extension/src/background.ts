@@ -9,6 +9,13 @@ import {
   clearNotifiedDomains
 } from './utils';
 import type { RuntimeState, LimitReachedPayload } from './types';
+import {
+  setupSyncAlarm,
+  handleSyncAlarm,
+  performInitialSync,
+  needsInitialSync,
+  syncTodayUsage,
+} from './utils/sync';
 
 const API_ENDPOINT = 'http://localhost:8000/limit-reached';
 const ALARM_NAME = 'checkLimits';
@@ -30,6 +37,9 @@ async function initializeTracking(): Promise<void> {
     periodInMinutes: ALARM_INTERVAL_MINUTES,
   });
   
+  // Set up sync alarm
+  setupSyncAlarm();
+  
   // Set up event listeners
   chrome.tabs.onActivated.addListener(handleTabActivated);
   chrome.tabs.onUpdated.addListener(handleTabUpdated);
@@ -42,6 +52,11 @@ async function initializeTracking(): Promise<void> {
   
   // Load notified domains from storage into in-memory cache
   await loadNotifiedDomainsCache();
+  
+  // Perform initial sync if needed
+  if (await needsInitialSync()) {
+    await performInitialSync();
+  }
 }
 
 /**
@@ -282,6 +297,12 @@ async function checkDailyReset(): Promise<void> {
  * Handle alarm events
  */
 async function handleAlarm(alarm: chrome.alarms.Alarm): Promise<void> {
+  if (alarm.name === 'syncToBackend') {
+    // Handle sync alarm
+    await handleSyncAlarm();
+    return;
+  }
+  
   if (alarm.name === ALARM_NAME) {
     // Check daily reset
     await checkDailyReset();
@@ -330,6 +351,9 @@ async function handleAlarm(alarm: chrome.alarms.Alarm): Promise<void> {
     
     // Check limits
     await checkLimits();
+    
+    // Also sync today's usage periodically
+    await syncTodayUsage();
   }
 }
 
