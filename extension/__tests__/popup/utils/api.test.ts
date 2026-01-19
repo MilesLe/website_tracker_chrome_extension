@@ -1,21 +1,77 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   syncUsage,
   getCalendarMonth,
   getDayDetails,
   syncTrackedSites,
   getTrackedSites,
+  getUserId,
 } from '../../../src/popup/utils/api';
 import { resetMocks, chrome } from '../../setup';
 
 describe('API utilities', () => {
+  let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     resetMocks();
     vi.clearAllMocks();
     vi.stubGlobal('fetch', vi.fn());
+    // Create spy fresh in each test to avoid issues with resetMocks
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
-  // Note: getUserId is tested indirectly through other functions
+  afterEach(() => {
+    consoleLogSpy.mockRestore();
+  });
+
+  describe('getUserId', () => {
+    it('should use hardcoded user ID "123" in development mode (localhost)', async () => {
+      // Clear any existing userId from storage
+      chrome().storage.local.get.mockResolvedValue({});
+      chrome().storage.local.set.mockResolvedValue(undefined);
+
+      const userId = await getUserId();
+
+      expect(userId).toBe('123');
+      expect(chrome().storage.local.set).toHaveBeenCalledWith({ userId: '123' });
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[DEV MODE]')
+      );
+    });
+
+    it('should return hardcoded user ID "123" in dev mode regardless of storage', async () => {
+      // In dev mode, the function always returns '123' and doesn't check storage
+      chrome().storage.local.get.mockResolvedValue({ userId: 'some-other-id' });
+      chrome().storage.local.set.mockResolvedValue(undefined);
+
+      const userId = await getUserId();
+
+      expect(userId).toBe('123');
+      // Should log dev mode
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[DEV MODE]')
+      );
+      // Should store '123' even if storage had a different value
+      expect(chrome().storage.local.set).toHaveBeenCalledWith({ userId: '123' });
+    });
+
+    it('should store and return the dev user ID consistently', async () => {
+      // Test that dev mode consistently uses '123' even when called multiple times
+      chrome().storage.local.get.mockResolvedValue({});
+      chrome().storage.local.set.mockResolvedValue(undefined);
+
+      const userId1 = await getUserId();
+      const userId2 = await getUserId();
+
+      // Both calls should return '123' in dev mode
+      expect(userId1).toBe('123');
+      expect(userId2).toBe('123');
+      // Should have logged dev mode for both calls
+      expect(consoleLogSpy).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  // Note: getUserId is also tested indirectly through other functions
   // as it's called internally by the API functions
 
   describe('syncUsage', () => {
@@ -31,7 +87,9 @@ describe('API utilities', () => {
         json: async () => mockResponse,
       });
 
-      chrome().storage.local.get.mockResolvedValue({ userId: 'test-user' });
+      // In dev mode (localhost), getUserId returns '123'
+      chrome().storage.local.get.mockResolvedValue({});
+      chrome().storage.local.set.mockResolvedValue(undefined);
 
       const result = await syncUsage('2024-01-15', { 'youtube.com': 60 });
 
@@ -42,7 +100,7 @@ describe('API utilities', () => {
           method: 'POST',
           headers: expect.objectContaining({
             'Content-Type': 'application/json',
-            'X-User-ID': 'test-user',
+            'X-User-ID': '123', // Dev mode uses '123'
           }),
         })
       );
@@ -55,7 +113,9 @@ describe('API utilities', () => {
         text: async () => 'Internal Server Error',
       });
 
-      chrome().storage.local.get.mockResolvedValue({ userId: 'test-user' });
+      // In dev mode (localhost), getUserId returns '123'
+      chrome().storage.local.get.mockResolvedValue({});
+      chrome().storage.local.set.mockResolvedValue(undefined);
 
       await expect(
         syncUsage('2024-01-15', { 'youtube.com': 60 })
@@ -76,7 +136,9 @@ describe('API utilities', () => {
         json: async () => mockResponse,
       });
 
-      chrome().storage.local.get.mockResolvedValue({ userId: 'test-user' });
+      // In dev mode (localhost), getUserId returns '123'
+      chrome().storage.local.get.mockResolvedValue({});
+      chrome().storage.local.set.mockResolvedValue(undefined);
 
       const result = await getCalendarMonth(2024, 1);
 
@@ -103,7 +165,9 @@ describe('API utilities', () => {
         json: async () => mockResponse,
       });
 
-      chrome().storage.local.get.mockResolvedValue({ userId: 'test-user' });
+      // In dev mode (localhost), getUserId returns '123'
+      chrome().storage.local.get.mockResolvedValue({});
+      chrome().storage.local.set.mockResolvedValue(undefined);
 
       const result = await getDayDetails('2024-01-15');
 
@@ -123,7 +187,9 @@ describe('API utilities', () => {
         json: async () => mockResponse,
       });
 
-      chrome().storage.local.get.mockResolvedValue({ userId: 'test-user' });
+      // In dev mode (localhost), getUserId returns '123'
+      chrome().storage.local.get.mockResolvedValue({});
+      chrome().storage.local.set.mockResolvedValue(undefined);
 
       const result = await syncTrackedSites({ 'youtube.com': 60 });
 
@@ -142,7 +208,9 @@ describe('API utilities', () => {
         json: async () => mockResponse,
       });
 
-      chrome().storage.local.get.mockResolvedValue({ userId: 'test-user' });
+      // In dev mode (localhost), getUserId returns '123'
+      chrome().storage.local.get.mockResolvedValue({});
+      chrome().storage.local.set.mockResolvedValue(undefined);
 
       const result = await getTrackedSites();
 

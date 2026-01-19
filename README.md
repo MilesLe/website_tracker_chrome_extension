@@ -598,6 +598,7 @@ uv python install 3.14
    - **Destroy any existing database** (you'll be prompted to confirm)
    - Create all tables (users, tracked_sites, usage_records)
    - Create indexes for performance
+   - **If `ENVIRONMENT=dev` in `.env`**: Automatically seed test data for the past week
    
    **Note**: This is a **destructive operation**. All existing data will be lost. Only run this when you want to reset the database.
 
@@ -625,6 +626,52 @@ You'll be prompted to confirm before the database is destroyed. This will:
 3. Recreate all indexes
 
 **Warning**: This operation is **irreversible**. All user data, tracked sites, and usage records will be permanently deleted.
+
+### Development Mode & Test Data
+
+The project includes a development mode feature that automatically seeds test data and uses a hardcoded user ID for easier testing and validation.
+
+#### Backend Development Mode
+
+1. **Create `.env` file** in the `backend/` directory:
+   ```bash
+   cd backend
+   echo "ENVIRONMENT=dev" > .env
+   ```
+
+2. **Run migration** - The migration script will automatically:
+   - Detect development mode from the `ENVIRONMENT=dev` variable
+   - Create a test user with ID `"123"`
+   - Seed fake data for the past 7 days with 3 tracked sites:
+     - `youtube.com` (60 min limit)
+     - `reddit.com` (30 min limit)
+     - `twitter.com` (45 min limit)
+   - Generate usage records with varied patterns (some over limit, some under, some at limit)
+
+3. **Check logs** - When running `./migrate.sh` in dev mode, you'll see:
+   ```
+   🔧 DEVELOPMENT MODE DETECTED
+      ENVIRONMENT variable: dev
+      Using hardcoded user ID '123' to match extension
+   ```
+
+#### Extension Development Mode
+
+The extension automatically detects development mode when the API base URL is `localhost:8000` or `127.0.0.1`:
+
+- **Automatically uses user ID `"123"`** to match the seeded test data
+- **Logs to console**: `[DEV MODE] Development environment detected - using hardcoded user ID "123"`
+- In production (non-localhost URLs), it generates and stores random UUIDs
+
+**Benefits:**
+- Test data is immediately visible in the extension calendar view
+- No need to manually sync or create test users
+- Consistent user ID across backend and extension in development
+
+**To verify development mode is working:**
+1. Open Chrome DevTools (right-click extension icon → Inspect popup)
+2. Check the console for the `[DEV MODE]` log message
+3. The calendar should show the past week's seeded data
 
 ### Database Location
 

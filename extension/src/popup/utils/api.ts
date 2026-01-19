@@ -65,9 +65,27 @@ export interface TrackedSitesResponse {
 }
 
 /**
+ * Check if we're in development mode.
+ * Development mode is when API_BASE_URL is localhost.
+ */
+function isDevelopmentMode(): boolean {
+  return API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1');
+}
+
+/**
  * Get user ID from storage or generate new one.
+ * In development mode, uses hardcoded user ID "123" to match seeded test data.
  */
 export async function getUserId(): Promise<string> {
+  // In development mode, use hardcoded user ID "123" to match seeded test data
+  if (isDevelopmentMode()) {
+    console.log('[DEV MODE] Development environment detected - using hardcoded user ID "123"');
+    const devUserId = '123';
+    // Store it so it persists
+    await chrome.storage.local.set({ userId: devUserId });
+    return devUserId;
+  }
+  
   const result = await chrome.storage.local.get('userId');
   if (result.userId) {
     return result.userId;
