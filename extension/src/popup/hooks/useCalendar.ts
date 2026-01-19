@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getCalendarMonth, type CalendarMonthResponse } from '../utils/api';
 import { useUserId } from './useUserId';
+import { syncTodayUsage } from '../../utils/sync';
 
 /**
  * Hook to fetch calendar data for a specific month.
@@ -47,7 +48,7 @@ export function useCalendar(year: number, month: number) {
               setCalendarData(parsed);
               setIsLoading(false);
             }
-            // Still fetch in background to update cache
+            // Still fetch in background to update cache (with sync)
             // Catch errors silently since we already have cached data
             fetchCalendar(currentRequestId).catch((err) => {
               console.error('Error fetching calendar in background:', err);
@@ -72,6 +73,15 @@ export function useCalendar(year: number, month: number) {
 
     async function fetchCalendar(requestId: number) {
       try {
+        // Sync today's usage data before fetching calendar to ensure backend has latest data
+        // This is especially important for the current day which may not have been synced yet
+        try {
+          await syncTodayUsage();
+        } catch (syncError) {
+          // Log but don't fail - sync errors shouldn't prevent calendar from loading
+          console.warn('Failed to sync today\'s usage before fetching calendar:', syncError);
+        }
+        
         const data = await getCalendarMonth(year, month);
         
         // Only update state if this is still the current request

@@ -3,19 +3,24 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { useCalendar } from '../../../src/popup/hooks/useCalendar';
 import * as apiModule from '../../../src/popup/utils/api';
 import * as useUserIdModule from '../../../src/popup/hooks/useUserId';
+import * as syncModule from '../../../src/utils/sync';
 
 vi.mock('../../../src/popup/utils/api');
 vi.mock('../../../src/popup/hooks/useUserId');
+vi.mock('../../../src/utils/sync');
 
 describe('useCalendar', () => {
   const mockGetCalendarMonth = vi.mocked(apiModule.getCalendarMonth);
   const mockUseUserId = vi.mocked(useUserIdModule.useUserId);
+  const mockSyncTodayUsage = vi.mocked(syncModule.syncTodayUsage);
 
   beforeEach(() => {
     // Clear mock call history but keep implementations
     vi.clearAllMocks();
     // Clear sessionStorage
     sessionStorage.clear();
+    // Mock sync to resolve successfully by default
+    mockSyncTodayUsage.mockResolvedValue(undefined);
   });
 
   it('should load calendar data on mount', async () => {
@@ -51,6 +56,7 @@ describe('useCalendar', () => {
 
     expect(result.current.calendarData).toEqual(mockCalendarData);
     expect(mockGetCalendarMonth).toHaveBeenCalledWith(2024, 1);
+    expect(mockSyncTodayUsage).toHaveBeenCalled();
   });
 
   it('should use cached data if available', async () => {
@@ -137,6 +143,7 @@ describe('useCalendar', () => {
     // Wait for background fetch to be called
     await waitFor(() => {
       expect(mockGetCalendarMonth).toHaveBeenCalledWith(2024, 1);
+      expect(mockSyncTodayUsage).toHaveBeenCalled();
     });
 
     // Wait a bit for the error to be caught
@@ -172,6 +179,8 @@ describe('useCalendar', () => {
 
     expect(result.current.error).toEqual(error);
     expect(result.current.calendarData).toBe(null);
+    // Sync should still be called even if calendar fetch fails
+    expect(mockSyncTodayUsage).toHaveBeenCalled();
   });
 
   it('should not fetch if user ID is still loading', () => {
@@ -229,6 +238,8 @@ describe('useCalendar', () => {
     });
 
     expect(mockGetCalendarMonth).toHaveBeenCalledTimes(2);
+    // Sync should be called for each fetch
+    expect(mockSyncTodayUsage).toHaveBeenCalledTimes(2);
   });
 
   it('should ignore stale requests when navigating quickly between months', async () => {
@@ -292,5 +303,44 @@ describe('useCalendar', () => {
     // Verify that month 2 data is still displayed (not overwritten by stale month 1 data)
     expect(result.current.calendarData).toEqual(mockData2);
     expect(result.current.calendarData?.month).toBe(2);
+  });
+
+  it('should handle sync errors gracefully and still load calendar', async () => {
+    const testUserId = 'test-user-id';
+    const mockCalendarData = {
+      year: 2024,
+      month: 1,
+      days: [],
+    };
+    const syncError = new Error('Sync failed');
+
+    mockUseUserId.mockReturnValue({
+      userId: testUserId,
+      isLoading: false,
+    });
+    mockSyncTodayUsage.mockRejectedValue(syncError);
+    mockGetCalendarMonth.mockResolvedValue(mockCalendarData);
+
+    // Spy on console.warn to verify warning is logged
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const { result } = renderHook(() => useCalendar(2024, 1));
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    // Calendar should still load despite sync error
+    expect(result.current.calendarData).toEqual(mockCalendarData);
+    expect(result.current.error).toBe(null);
+    
+    // Verify sync was attempted and error was logged
+    expect(mockSyncTodayUsage).toHaveBeenCalled();
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      'Failed to sync today\'s usage before fetching calendar:',
+      syncError
+    );
+
+    consoleWarnSpy.mockRestore();
   });
 });
