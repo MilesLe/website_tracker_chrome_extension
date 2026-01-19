@@ -196,11 +196,18 @@ export default function CalendarView({
     // Selection will be updated by useEffect based on whether it's current month
   };
 
-  const handleDayClick = (day: CalendarMonthResponse['days'][0] | null, _dayNumber: number, isCurrentMonth: boolean) => {
-    if (!day || !isCurrentMonth) {
+  const handleDayClick = (_day: CalendarMonthResponse['days'][0] | null, _dayNumber: number, isCurrentMonth: boolean, hasData: boolean, dateStr: string) => {
+    // Only allow clicking days with data (or today, which can be auto-selected even without data)
+    if (!isCurrentMonth) {
       return;
     }
-    setSelectedDate(selectedDate === day.date ? null : day.date);
+    // Allow selection if day has data, or if it's today (which can be selected even without data)
+    const isToday = dateStr === today;
+    if (!hasData && !isToday) {
+      return; // Prevent selection of past days without data
+    }
+    // Use dateStr directly (it matches day.date when day exists, or is the date string for today)
+    setSelectedDate(selectedDate === dateStr ? null : dateStr);
   };
 
   const selectedDay = calendarData?.days.find(d => d.date === selectedDate) || null;
@@ -254,6 +261,11 @@ export default function CalendarView({
           const hasData = day !== null;
           const isFuture = dateStr ? new Date(dateStr) > new Date(today) : false;
 
+          // Only show as selected if:
+          // 1. The date matches selectedDate AND
+          // 2. Either the day has data OR it's today (which can be selected even without data)
+          const isSelected = selectedDate === dateStr && (hasData || isToday);
+
           return (
             <DayCell
               key={index}
@@ -263,8 +275,8 @@ export default function CalendarView({
               isToday={isToday}
               hasData={hasData}
               isFuture={isFuture}
-              onClick={() => handleDayClick(day, dayNumber, isCurrentMonth)}
-              isSelected={selectedDate === (day?.date || dateStr)}
+              onClick={() => handleDayClick(day, dayNumber, isCurrentMonth, hasData, dateStr)}
+              isSelected={isSelected}
             />
           );
         })}

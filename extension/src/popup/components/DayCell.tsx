@@ -32,13 +32,9 @@ const StyledDayCell = styled(Box)<{
     if (!isCurrentMonth) {
       return 'transparent';
     }
-    // Selected state takes precedence (even for days without data)
+    // Selected state takes precedence (even for days without data) - use blue
     if (isSelected) {
-      // If selected but no data, show a lighter selected color
-      if (!hasData || isFuture) {
-        return theme.palette.action.selected;
-      }
-      return theme.palette.action.selected;
+      return theme.palette.info.main;
     }
     // Grey for days without data (past days before tracking started, or future days)
     if (!hasData || isFuture) {
@@ -66,9 +62,13 @@ const StyledDayCell = styled(Box)<{
   
   &:hover {
     transform: ${({ isCurrentMonth, hasData }) => (isCurrentMonth && hasData ? 'scale(1.1)' : 'none')};
-    background-color: ${({ theme, limitReached, isCurrentMonth, isToday, hasData, isFuture }) => {
+    background-color: ${({ theme, limitReached, isCurrentMonth, isToday, isSelected, hasData, isFuture }) => {
       if (!isCurrentMonth) {
         return 'transparent';
+      }
+      // Keep blue for selected days on hover (slightly lighter)
+      if (isSelected) {
+        return theme.palette.info.light || theme.palette.info.main;
       }
       // No hover effect for days without data
       if (!hasData || isFuture) {
@@ -114,7 +114,7 @@ export default function DayCell({
       isSelected={isSelected}
       hasData={hasData}
       isFuture={isFuture}
-      onClick={isCurrentMonth && hasData ? onClick : undefined}
+      onClick={isCurrentMonth && (hasData || isToday) ? onClick : undefined}
     >
       <StyledDayNumber>{dayNumber}</StyledDayNumber>
     </StyledDayCell>

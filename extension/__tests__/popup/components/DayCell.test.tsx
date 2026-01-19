@@ -202,7 +202,7 @@ describe('DayCell', () => {
     // Cell should be rendered (grey color is applied via styled component)
   });
 
-  it('should show selected state', () => {
+  it('should show selected state with blue background', () => {
     const { container } = renderWithTheme(
       <DayCell
         day={mockDay}
@@ -218,10 +218,12 @@ describe('DayCell', () => {
 
     const cell = container.firstChild as HTMLElement;
     expect(cell).toBeInTheDocument();
-    // Selected state is applied via styled component
+    // Selected state should have blue background (#42a5f5)
+    const styles = window.getComputedStyle(cell);
+    expect(styles.backgroundColor).toBe('rgb(66, 165, 245)'); // #42a5f5 in rgb
   });
 
-  it('should show selected state even for days without data', () => {
+  it('should show selected state with blue background even for days without data', () => {
     const { container } = renderWithTheme(
       <DayCell
         day={null}
@@ -237,7 +239,9 @@ describe('DayCell', () => {
 
     const cell = container.firstChild as HTMLElement;
     expect(cell).toBeInTheDocument();
-    // Selected state should still be visible even without data
+    // Selected state should have blue background even without data
+    const styles = window.getComputedStyle(cell);
+    expect(styles.backgroundColor).toBe('rgb(66, 165, 245)'); // #42a5f5 in rgb
   });
 
   it('should show today indicator', () => {
@@ -257,5 +261,26 @@ describe('DayCell', () => {
     const cell = container.firstChild as HTMLElement;
     expect(cell).toBeInTheDocument();
     // Today indicator is applied via styled component
+  });
+
+  it('should not show blue background when not selected', () => {
+    const { container } = renderWithTheme(
+      <DayCell
+        day={mockDay}
+        dayNumber={15}
+        isCurrentMonth={true}
+        isToday={false}
+        hasData={true}
+        isFuture={false}
+        onClick={vi.fn()}
+        isSelected={false}
+      />
+    );
+
+    const cell = container.firstChild as HTMLElement;
+    expect(cell).toBeInTheDocument();
+    // Non-selected days should not have blue background
+    const styles = window.getComputedStyle(cell);
+    expect(styles.backgroundColor).not.toBe('rgb(66, 165, 245)'); // Should not be blue
   });
 });
